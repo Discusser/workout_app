@@ -225,19 +225,20 @@ class Goal extends StatefulWidget {
         focusNode = FocusNode(),
         isFresh = isFresh ?? false;
 
-  Goal.fromModel({Key? key, required GoalModel goalModel, void Function(String)? onSubmitted})
+  Goal.fromModel({Key? key, required GoalModel goalModel, bool Function(String text, GoalModel goal)? onSubmitted})
       : this(
             key: key,
             completed: goalModel.completed,
             goal: goalModel.goal,
             goalModel: goalModel,
-            onSubmitted: onSubmitted ?? (s) {});
+            onSubmitted: onSubmitted ?? (text, goal) => true
+  );
 
   final GoalModel goalModel;
   final bool completed;
   final String goal;
   final TextEditingController controller;
-  final void Function(String text) onSubmitted;
+  final bool Function(String text, GoalModel goal) onSubmitted;
   final FocusNode focusNode;
   final bool isFresh;
 
@@ -246,6 +247,7 @@ class Goal extends StatefulWidget {
 }
 
 class _GoalState extends State<Goal> {
+  String _oldText = "";
   bool _completed = false;
   bool _isFresh = false; // Whether or not this state has just been added (using the add goal button)
   bool _enqueueFocus = false; // Whether or not focus should be requested on the next build call
@@ -263,14 +265,24 @@ class _GoalState extends State<Goal> {
   }
 
   void requestEnqueuedFocus() {
-    FocusScope.of(context).requestFocus(widget.focusNode); // todo: FIX
-    _enqueueFocus = false;
+    if (!widget.focusNode.hasFocus && _enqueueFocus) {
+      FocusScope.of(context).requestFocus(widget.focusNode); // todo: FIX
+      _enqueueFocus = false;
+    }
   }
 
   void toggleCompletion() {
     setState(() {
       _completed = !_completed;
     });
+  }
+
+  void onSubmitted(String text) {
+    if (widget.onSubmitted(_oldText, GoalModel(completed: _completed, goal: text)) == false) {
+      _enqueueFocus = true;
+    }
+
+    _oldText = text;
   }
 
   @override
@@ -288,7 +300,7 @@ class _GoalState extends State<Goal> {
       textAlignVertical: TextAlignVertical.center,
       keyboardType: TextInputType.text,
       textInputAction: TextInputAction.done,
-      onSubmitted: (text) => widget.onSubmitted(text),
+      onSubmitted: (text) => onSubmitted(text),
     );
 
     if (_enqueueFocus) {

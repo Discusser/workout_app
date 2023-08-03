@@ -12,6 +12,7 @@ import 'package:workout_app/settings.dart';
 import 'package:workout_app/user_data.dart';
 
 import 'app_theme.dart';
+import 'firestore_types.dart';
 
 void main() async {
   // todo : add splash screen
@@ -27,9 +28,9 @@ void main() async {
   
   FirebaseAuth.instance.authStateChanges().listen((user) {
     if (user == null) {
-      debugPrint("Signed out...");
+      debugPrint("Signed out");
     } else {
-      debugPrint("Signed in! ${user.email}:${user.uid}");
+      debugPrint("Signed in with email address ${user.email}");
     }
     userModel.updateUser(user);
   });
@@ -167,76 +168,100 @@ class GoalsListView extends StatefulWidget {
 }
 
 class _GoalsListViewState extends State<GoalsListView> {
+  late Future<List<Goal>> _goalsFuture;
   List<Goal> _goals = <Goal>[];
   bool _shouldFetchGoals = true; // Whether or not this state should fetch the goals from Firestore
-  late String _username;
+  late Future<String> _username;
 
   @override
   void initState() {
     super.initState();
 
-    () async {
-      _username = await Provider.of<UserModel>(context, listen: false).username;
-    }();
+    _username = Provider.of<UserModel>(context, listen: false).username;
+
+    _goalsFuture = getGoals();
   }
 
-  void addGoal(BuildContext context) {
+  void _addGoal() {
+    if (_goals.where((element) => element.goal == "").isNotEmpty) {
+      context.showError("There is already an empty goal that exists. Fill it or delete it.");
+      return;
+    }
+
     setState(() {
-      // todo: Open keyboard when the goal is added
-      // todo: add goal to firebase
-      print("adding goal");
+      debugPrint("Adding goal to _goals");
       var goal = Goal(completed: false, goal: "", onSubmitted: onSubmitted, isFresh: true);
       _goals.insert(0, goal);
-      print("goal added to _goals");
-      // var username = await Provider.of<UserModel>(context).username;
-      // FirebaseFirestore.instance.collection("goals").doc(username).withConverter(
-      //     fromFirestore: GoalModel.fromFirestore,
-      //     toFirestore: (value, options) => value.toFirestore(),
-      // );
     });
   }
 
-  void onSubmitted(String text) {
+  Future<void> _insertGoal(int index, GoalModel goal) async {
+    var username = await _username;
+    await FirebaseFirestore.instance.collection("goals").doc(username).insertGoal(index, goal);
+  }
+
+  // todo: Also add to database when goal completed Checkmark is ticked
+  /// Returns `false` if there is already a goal with the same text, returns `true` otherwise
+  bool onSubmitted(String oldText, GoalModel goal) {
+    // Check if a goal with the same text already exists
+    if (_goals.where((element) => element.goal == goal.goal).length > 1) {
+      context.showError("A goal with the same text already exists");
+      return false;
+    }
+
+    // Get index of goal in _goals
+    var index = _goals.indexWhere((element) => element.goal == oldText);
+
+    // Update _goals
+    _goals[index] = Goal.fromModel(goalModel: goal, onSubmitted: onSubmitted);
+
     // Update Firestore
+    debugPrint("Updating Firestore with goal ${goal.goal}");
+
+    _insertGoal(index, goal);
+
+    return true;
   }
 
   Future<List<Goal>> getGoals() async {
-    print("getGoals has been called and shouldFetchGoals is set to $_shouldFetchGoals, username is $_username");
-    print("_goals: $_goals");
-
     if (!_shouldFetchGoals) {
       return _goals; // Return local version of goals
     }
 
+    var username = await _username;
     var goals = <Goal>[];
 
-    goals = await FirebaseFirestore.instance.collection("goals").doc(_username).getGoals(onSubmitted: onSubmitted);
-
-    print("Query has completed, it's result is $goals");
+    debugPrint("Getting goals for $username from Firestore");
+    goals = await FirebaseFirestore.instance.collection("goals").doc(username).getGoals(onSubmitted: onSubmitted);
 
     _goals = goals; // Cache goals from firestore
-
     _shouldFetchGoals = false;
 
     return goals;
   }
 
   void _dismissGoalAsync(Goal goal) async {
-    print("removing goal from firebase");
-
     // Remove entry from firebase
-    await FirebaseFirestore.instance.collection("goals").doc(_username).removeGoal(goal.goalModel);
+    await FirebaseFirestore.instance.collection("goals").doc(await _username).removeGoal(goal.goalModel);
   }
 
-  void dismissGoal(BuildContext context, Goal goal) {
-    print("starting goal dismiss");
+  void dismissGoal(Goal goal) {
+    debugPrint("Dismissing goal ${goal.goal}");
 
     _dismissGoalAsync(goal);
-
-    print("async part complete, showing snackbar..");
+    _goals.removeWhere((element) => element.goal == goal.goal);
 
     // Snackbar popup "goal removed"
     context.snackbar("Goal removed");
+  }
+
+  Widget _createDismissible(List<Goal> goals) {
+    var dismissibleChildren = <Widget>[];
+    for (int i = 0; i < _goals.length; i++) {
+      var child = _goals[i];
+      dismissibleChildren.add(Dismissible(key: UniqueKey(), child: child, onDismissed: (direction) => dismissGoal(child)));
+    }
+    return Column(children: dismissibleChildren);
   }
 
   @override
@@ -245,33 +270,30 @@ class _GoalsListViewState extends State<GoalsListView> {
       alignment: Alignment.center,
       children: [
         const SectionTitle(text: "Goals"),
-        Align(alignment: Alignment.centerRight, child: IconButton(onPressed: () => addGoal(context), icon: const Icon(Icons.add_circle),
+        Align(alignment: Alignment.centerRight, child: IconButton(onPressed: _addGoal, icon: const Icon(Icons.add_circle),
             color: AppColors.success.withOpacity(0.75)))
       ],
     );
 
-    var goals = FutureBuilder(
-        future: getGoals(), // This is fine because the getGoals function is smart and will only fetch from database if necessary
+    Widget goals;
+    if (_goals.isEmpty) {
+      goals = FutureBuilder(
+        future: _goalsFuture, // This is fine because the getGoals function is smart and will only fetch from database if necessary
         builder: (context, snapshot) {
-          print("attempting to get goals");
           if (snapshot.hasData) {
             _goals = snapshot.data!;
-            print("snapshot has data $_goals");
-            var dismissibleChildren = <Widget>[];
-            for (int i = 0; i < _goals.length; i++) {
-              var child = _goals[i];
-              dismissibleChildren.add(Dismissible(key: UniqueKey(), child: child, onDismissed: (direction) => dismissGoal(context, child)));
-            }
-            return Column(children: dismissibleChildren);
+            return _createDismissible(_goals);
           } else {
-            print("no data yet");
             return Column(children: [
               Text("Fetching goals...", style: Theme.of(context).text.titleMedium),
               Container(margin: const EdgeInsets.all(8.0), height: 2.0, child: const LinearProgressIndicator()),
             ]);
           }
         },
-    );
+      );
+    } else {
+      goals = _createDismissible(_goals);
+    }
 
     return PaddedContainer(child: Column(
       children: [

@@ -18,8 +18,13 @@ class GoalListModel {
   }
 
   Map<String, dynamic> toFirestore() {
+    var array = goals.map((model) => {
+      "completed": model.completed,
+      "goal": model.goal
+    });
+
     return {
-      "goals": goals,
+      "goals": array,
     };
   }
 }

@@ -70,14 +70,11 @@ extension ErrorHelper on BuildContext {
 }
 
 extension FirestoreDocumentHelper on DocumentReference {
-  Future<List<Goal>> getGoals({void Function(String)? onSubmitted}) async {
+  Future<List<Goal>> getGoals({bool Function(String text, GoalModel goal)? onSubmitted}) async {
     var goals = <Goal>[];
 
-    print("BEFORE awaiting snapshot");
     var snapshot = await withConverter(fromFirestore: GoalListModel.fromFirestore, toFirestore: (value, options) => value.toFirestore()).get();
-    print("firestore getGoals snapshot: $snapshot");
     for (var model in snapshot.data()!.goals) {
-      print("firestore getGoals model: ${model.goal} ${model.completed}");
       goals.add(Goal.fromModel(goalModel: model, onSubmitted: onSubmitted));
     }
 
@@ -88,5 +85,17 @@ extension FirestoreDocumentHelper on DocumentReference {
     update({
       "goals": FieldValue.arrayRemove([model.toFirestore()])
     });
+  }
+
+  Future<void> addGoals(List<GoalModel> goals) async {
+    var model = GoalListModel(goals: goals);
+    await withConverter(fromFirestore: GoalListModel.fromFirestore, toFirestore: (value, options) => value.toFirestore()).set(model);
+  }
+
+  Future<void> insertGoal(int index, GoalModel model) async {
+    var goals = await getGoals();
+    var models = goals.map((goal) => GoalModel(completed: goal.completed, goal: goal.goal)).toList();
+    models.insert(index, model);
+    addGoals(models);
   }
 }
