@@ -225,7 +225,7 @@ class Goal extends StatefulWidget {
         focusNode = FocusNode(),
         isFresh = isFresh ?? false;
 
-  Goal.fromModel({Key? key, required GoalModel goalModel, bool Function(String text, GoalModel goal)? onSubmitted})
+  Goal.fromModel({Key? key, required GoalModel goalModel, bool Function(GoalModel oldGoal, GoalModel goal)? onSubmitted})
       : this(
             key: key,
             completed: goalModel.completed,
@@ -238,7 +238,7 @@ class Goal extends StatefulWidget {
   final bool completed;
   final String goal;
   final TextEditingController controller;
-  final bool Function(String text, GoalModel goal) onSubmitted;
+  final bool Function(GoalModel oldGoal, GoalModel goal) onSubmitted;
   final FocusNode focusNode;
   final bool isFresh;
 
@@ -247,7 +247,7 @@ class Goal extends StatefulWidget {
 }
 
 class _GoalState extends State<Goal> {
-  String _oldText = "";
+  GoalModel _oldGoal = const GoalModel(completed: false, goal: "");
   bool _completed = false;
   bool _isFresh = false; // Whether or not this state has just been added (using the add goal button)
   bool _enqueueFocus = false; // Whether or not focus should be requested on the next build call
@@ -257,6 +257,7 @@ class _GoalState extends State<Goal> {
     super.initState();
     _completed = widget.completed;
     _isFresh = widget.isFresh;
+    _oldGoal = GoalModel(completed: _completed, goal: widget.goal);
 
     if (_isFresh) {
       _enqueueFocus = true;
@@ -275,14 +276,21 @@ class _GoalState extends State<Goal> {
     setState(() {
       _completed = !_completed;
     });
+
+    var model = GoalModel(completed: _completed, goal: widget.controller.text);
+    debugPrint("_oldGoal: ${_oldGoal.completed} ${_oldGoal.goal}, model: ${model.completed} ${model.goal}");
+    widget.onSubmitted(_oldGoal, model);
+    _oldGoal = model;
   }
 
   void onSubmitted(String text) {
-    if (widget.onSubmitted(_oldText, GoalModel(completed: _completed, goal: text)) == false) {
+    var model = GoalModel(completed: _completed, goal: text);
+
+    if (widget.onSubmitted(_oldGoal, model) == false) {
       _enqueueFocus = true;
     }
 
-    _oldText = text;
+    _oldGoal = model;
   }
 
   @override

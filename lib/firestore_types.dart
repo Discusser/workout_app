@@ -51,4 +51,17 @@ class GoalModel {
       "goal": goal,
     };
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is GoalModel && runtimeType == other.runtimeType && completed == other.completed && goal == other.goal;
+
+  @override
+  int get hashCode => completed.hashCode ^ goal.hashCode;
+
+  @override
+  String toString() {
+    return 'GoalModel{completed: $completed, goal: $goal}';
+  }
 }

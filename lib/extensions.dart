@@ -70,7 +70,7 @@ extension ErrorHelper on BuildContext {
 }
 
 extension FirestoreDocumentHelper on DocumentReference {
-  Future<List<Goal>> getGoals({bool Function(String text, GoalModel goal)? onSubmitted}) async {
+  Future<List<Goal>> getGoals({bool Function(GoalModel oldGoal, GoalModel goal)? onSubmitted}) async {
     var goals = <Goal>[];
 
     var snapshot = await withConverter(fromFirestore: GoalListModel.fromFirestore, toFirestore: (value, options) => value.toFirestore()).get();
@@ -82,6 +82,7 @@ extension FirestoreDocumentHelper on DocumentReference {
   }
 
   Future<void> removeGoal(GoalModel model) async {
+    debugPrint("To firestore: ${model.toFirestore()}");
     update({
       "goals": FieldValue.arrayRemove([model.toFirestore()])
     });

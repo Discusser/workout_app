@@ -62,6 +62,8 @@ class WeekSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // todo: make this dynamic
+    // todo: add the ability to add the data
     var listElements = [
       const StatisticText(
         text: "7.8 hours working out",
@@ -135,6 +137,8 @@ class WorkoutListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // todo: randomize image for workout based on workout exercise
+    // todo: add the ability to create workouts
     var children = <Widget>[
       _buildWorkout(context, "Push", p.join('assets', 'dips.png'), "45 minutes"),
       _buildWorkout(context, "Pull", p.join('assets', 'romanian_deadlift.png'), "45 minutes"),
@@ -142,8 +146,7 @@ class WorkoutListView extends StatelessWidget {
     ];
 
     return PaddedContainer(
-        child: Column(
-      children: [
+        child: Column(children: [
         const SectionTitle(text: "Your Workouts"),
         SizedBox(
           height: MediaQuery.of(context).size.height / 4,
@@ -195,30 +198,51 @@ class _GoalsListViewState extends State<GoalsListView> {
     });
   }
 
-  Future<void> _insertGoal(int index, GoalModel goal) async {
+  Future<void> _setGoal(int index, GoalModel oldGoal, GoalModel goal) async {
+    // Get username and fetch goals from database
     var username = await _username;
-    await FirebaseFirestore.instance.collection("goals").doc(username).insertGoal(index, goal);
+    var doc = FirebaseFirestore.instance.collection("goals").doc(username);
+    var goals = await doc.getGoals();
+
+    // If this goal was already present in the database before changing it, remove it so it can be replaced with the new value
+    var matches = goals.where((element) => element.goalModel == oldGoal);
+    if (matches.isNotEmpty) {
+      await doc.removeGoal(oldGoal);
+    }
+
+    // Insert the goal at the specified index into the database
+    await doc.insertGoal(index, goal);
   }
 
-  // todo: Also add to database when goal completed Checkmark is ticked
-  /// Returns `false` if there is already a goal with the same text, returns `true` otherwise
-  bool onSubmitted(String oldText, GoalModel goal) {
+  /// Returns `true` if there is already a goal with the same text, returns `false` otherwise
+  bool checkForDuplicateGoal(List<Goal> list, String goal) {
     // Check if a goal with the same text already exists
-    if (_goals.where((element) => element.goal == goal.goal).length > 1) {
+    if (_goals.where((element) => element.goal == goal).length > 1) {
       context.showError("A goal with the same text already exists");
+      return true;
+    }
+
+    return false;
+  }
+
+  /// Returns `false` if there is already a goal with the same text, returns `true` otherwise
+  bool onSubmitted(GoalModel oldGoal, GoalModel goal) {
+    // Check if a goal with the same text already exists
+    if (checkForDuplicateGoal(_goals, goal.goal)) {
       return false;
     }
 
     // Get index of goal in _goals
-    var index = _goals.indexWhere((element) => element.goal == oldText);
+    var index = _goals.indexWhere((element) => element.goal == oldGoal.goal);
 
+    debugPrint("Index $index found for goal ${oldGoal.goal}");
+    debugPrint("Here is the actual list: ${_goals.map((e) => e.goal).toList()}");
     // Update _goals
     _goals[index] = Goal.fromModel(goalModel: goal, onSubmitted: onSubmitted);
 
     // Update Firestore
     debugPrint("Updating Firestore with goal ${goal.goal}");
-
-    _insertGoal(index, goal);
+    _setGoal(index, oldGoal, goal);
 
     return true;
   }
