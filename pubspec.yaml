@@ -26,7 +26,7 @@ environment:
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
 # dependencies can be manually updated by changing the version numbers below to
 # the latest version available on pub.dev. To see which dependencies have newer
-# versions available, run `flutter pub outdated`.
+# versions available, run `flutter pub outdated`
 dependencies:
   flutter:
     sdk: flutter
@@ -37,7 +37,6 @@ dependencies:
   path: ^1.8.3
   shared_preferences: ^2.2.0
   provider: ^6.0.5
-  auto_size_text: ^3.0.0
   firebase_core: ^2.15.0
   cloud_firestore: ^4.8.4
   firebase_auth: ^4.7.2
@@ -46,6 +45,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  flutter_native_splash: ^2.3.1
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -97,3 +97,15 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+flutter_native_splash:
+  color: "#00489c"
+  image: assets/logo_xxxhdpi.png
+
+  android_12:
+    color: "#00489c"
+    image: assets/logo_xxxhdpi.png
+
+  android: true
+  ios: true
+  web: true

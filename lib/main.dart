@@ -15,7 +15,6 @@ import 'app_theme.dart';
 import 'firestore_types.dart';
 
 void main() async {
-  // todo : add splash screen
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
