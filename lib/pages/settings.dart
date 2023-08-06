@@ -2,10 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:workout_app/reusable_widgets.dart';
 import 'package:workout_app/user_data.dart';
 
-import 'main.dart';
+import '../reusable_widgets/containers.dart';
+import 'generic.dart';
 
 abstract class SettingsOption<T> extends StatefulWidget {
   SettingsOption({
