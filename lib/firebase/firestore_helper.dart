@@ -5,31 +5,32 @@ import '../reusable_widgets/goal.dart';
 import 'firestore_types.dart';
 
 extension FirestoreDocumentHelper on FirebaseFirestore {
-  Future<List<Goal>> getGoals(String username, {bool Function(GoalModel oldGoal, GoalModel goal)? onSubmitted}) async {
-    var goals = <Goal>[];
+  DocumentReference<Map<String, dynamic>> colGoals(String username) => collection("goals").doc(username);
+  DocumentReference<Map<String, dynamic>> colStats(String username) => collection("stats").doc(username);
+  CollectionReference<Map<String, dynamic>> colWorkouts(String username) => collection("workouts").doc(username).collection("workouts");
 
-    var snapshot = await collection("goals")
-        .doc(username)
+  Future<List<Goal>> getGoals(String username, {bool Function(GoalModel oldGoal, GoalModel goal)? onSubmitted}) async {
+    var list = <Goal>[];
+
+    var snapshot = await colGoals(username)
         .withConverter(fromFirestore: GoalListModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
         .get();
     for (var model in snapshot.data()!.goals) {
-      goals.add(Goal.fromModel(goalModel: model, onSubmitted: onSubmitted));
+      list.add(Goal.fromModel(goalModel: model, onSubmitted: onSubmitted));
     }
 
-    return goals;
+    return list;
   }
 
   Future<void> removeGoal(GoalModel model, String username) async {
-    debugPrint("To firestore: ${model.toFirestore()}");
-    collection("goals").doc(username).update({
+    colGoals(username).update({
       "goals": FieldValue.arrayRemove([model.toFirestore()])
     });
   }
 
   Future<void> addGoals(List<GoalModel> goals, String username) async {
     var model = GoalListModel(goals: goals);
-    await collection("goals")
-        .doc(username)
+    await colGoals(username)
         .withConverter(fromFirestore: GoalListModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
         .set(model);
   }
@@ -44,7 +45,7 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
   Future<List<String>> getWorkoutNames(String username) async {
     var workouts = <String>[];
 
-    var snapshot = await collection("workouts").doc(username).collection("workouts").get();
+    var snapshot = await colWorkouts(username).get();
     for (var doc in snapshot.docs) {
       workouts.add(doc.data()["name"]);
     }
@@ -54,6 +55,16 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
 
   Future<void> addWorkoutStat(DateTime date, int minutes, String name, String username) async {
     Map<String, dynamic> data = {"date": date, "minutes": minutes, "name": name};
-    await collection("stats").doc(username).collection("workouts").add(data);
+    await colStats(username).collection("workouts").add(data);
+  }
+
+  Future<void> addCardioStat(double kilometers, int minutes, DateTime date, String username) async {
+    Map<String, dynamic> data = {"kilometers": kilometers, "minutes": minutes, "date": date};
+    await colStats(username).collection("cardio").add(data);
+  }
+
+  Future<void> addWeightStat(double weight, DateTime date, String username) async {
+    Map<String, dynamic> data = {"weight": weight, "date": date};
+    await colStats(username).collection("weight").add(data);
   }
 }

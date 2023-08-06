@@ -9,6 +9,10 @@ class FormDialog extends StatelessWidget {
   final Widget form;
   final bool Function()? onSubmit;
 
+  static List<Widget> formatFormChildren(List<Widget> children) {
+    return children.map((e) => Container(padding: const EdgeInsets.symmetric(vertical: 8.0), child: e)).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
