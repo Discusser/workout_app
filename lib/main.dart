@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workout_app/pages/home.dart';
 import 'package:workout_app/pages/settings.dart';
+import 'package:workout_app/reusable_widgets/form_dialog.dart';
 import 'package:workout_app/user_data.dart';
 
 import 'firebase/firebase_options.dart';
@@ -15,7 +15,6 @@ void main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  var database = FirebaseFirestore.instance;
   var prefManager = PreferenceManager(preferences: await SharedPreferences.getInstance());
   var userModel = UserModel(user: null);
 
@@ -30,8 +29,7 @@ void main() async {
 
   runApp(MultiProvider(
     providers: [
-      Provider.value(value: database),
-      Provider.value(value: prefManager.preferences),
+      ChangeNotifierProvider(create: (context) => StatisticChangeModel()),
       ChangeNotifierProvider(create: (context) => userModel),
       ChangeNotifierProvider(create: (context) => SettingsModel(preferences: prefManager.preferences)),
     ],

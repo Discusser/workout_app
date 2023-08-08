@@ -25,10 +25,10 @@ class _AddCardioDialogState extends State<AddCardioDialog> {
   DateTime? _date;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-    _username = Provider.of<UserModel>(context, listen: false).username;
+    _username = Provider.of<UserModel>(context).username;
   }
 
   String? validateKilometers(String? value) {
@@ -49,12 +49,14 @@ class _AddCardioDialogState extends State<AddCardioDialog> {
 
   Future<void> _onSubmitAsync() async {
     var username = await _username;
-    FirebaseFirestore.instance.addCardioStat(double.parse(_kilometersController.text), int.parse(_minutesController.text), _date!, username);
+    FirebaseFirestore.instance
+        .addCardioStat(double.parse(_kilometersController.text), int.parse(_minutesController.text), _date!, username);
   }
 
   bool onSubmit() {
     if (_formKey.currentState!.validate()) {
       _onSubmitAsync();
+      Provider.of<StatisticChangeModel>(context, listen: false).change();
       context.snackbar("Added cardio!", beforeText: [const Icon(Icons.check, color: AppColors.success)]);
       return true;
     }

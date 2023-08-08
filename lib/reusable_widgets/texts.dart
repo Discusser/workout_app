@@ -6,17 +6,22 @@ import '../theme/app_theme.dart';
 class ProgressColor {
   static const up = ProgressColor(color: AppColors.success, sign: "+");
   static const down = ProgressColor(color: AppColors.error, sign: "-");
+  static const none = ProgressColor(color: AppColors.unusedText, sign: "");
 
-  static progressive(double progress) {
-    final color = ColorMath.colorBetween(AppColors.error, AppColors.success, (progress / 100));
-    return ProgressColor(color: color, progress: progress);
+  static progressive(ProgressColor color, double current, double? goal, double maxDistance) {
+    final difference = goal != null ? (current - goal).abs() : 0.0;
+    final percent = 1 - ((difference) / maxDistance).clamp(0, 1).toDouble();
+    final secondaryColor = ColorMath.colorBetween(AppColors.error, AppColors.success, percent);
+    return ProgressColor(color: color.color, sign: color.sign, secondaryColor: secondaryColor, difference: difference, goal: goal);
   }
 
-  const ProgressColor({required this.color, this.sign, this.progress});
+  const ProgressColor({required this.color, this.secondaryColor, this.sign, this.difference, this.goal});
 
   final Color color;
+  final Color? secondaryColor;
   final String? sign;
-  final double? progress;
+  final double? difference;
+  final double? goal;
 }
 
 class StatisticText extends StatelessWidget {
@@ -43,17 +48,20 @@ class StatisticText extends StatelessWidget {
         coloredText += value!;
       }
 
+      var colorStyle = style?.copyWith(color: progress?.color);
+
       children.add(
-        TextSpan(text: coloredText, style: style?.copyWith(color: progress?.color)),
+        TextSpan(text: coloredText, style: colorStyle),
       );
 
-      if (progress?.progress != null) {
-        var optionalColoredText = "${progress!.progress.toString()}%";
+      if (progress?.difference != null && progress?.goal != null) {
+        var secondaryColorStyle = style?.copyWith(color: progress?.secondaryColor ?? progress?.color);
 
         children.addAll([
           TextSpan(text: ", ", style: style),
-          TextSpan(text: optionalColoredText, style: style?.copyWith(color: progress?.color)),
-          TextSpan(text: " to goal", style: style)
+          TextSpan(text: "${(progress!.difference!).toStringAsFixed(1)} kg", style: secondaryColorStyle),
+          TextSpan(text: " from goal ", style: style),
+          TextSpan(text: "${progress!.goal!.toStringAsFixed(1)} kg", style: secondaryColorStyle)
         ]);
       }
 

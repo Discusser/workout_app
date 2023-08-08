@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 
 import 'containers.dart';
 
+class StatisticChangeModel with ChangeNotifier {
+  void change() {
+    notifyListeners();
+  }
+}
+
 class FormDialog extends StatelessWidget {
   const FormDialog({super.key, required this.title, required this.form, this.onSubmit});
 

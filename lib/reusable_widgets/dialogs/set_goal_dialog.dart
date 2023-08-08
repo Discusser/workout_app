@@ -8,20 +8,18 @@ import '../../theme/app_theme.dart';
 import '../../user_data.dart';
 import '../form_dialog.dart';
 
-class AddWeightDialog extends StatefulWidget {
-  const AddWeightDialog({super.key});
+class SetGoalDialog extends StatefulWidget {
+  const SetGoalDialog({super.key});
 
   @override
-  State<AddWeightDialog> createState() => _AddWeightDialogState();
+  State<SetGoalDialog> createState() => _SetGoalDialogState();
 }
 
-class _AddWeightDialogState extends State<AddWeightDialog> {
+class _SetGoalDialogState extends State<SetGoalDialog> {
   final _formKey = GlobalKey<FormState>();
   final _weightController = TextEditingController();
 
   late Future<String> _username;
-
-  DateTime? _date;
 
   @override
   void didChangeDependencies() {
@@ -40,7 +38,7 @@ class _AddWeightDialogState extends State<AddWeightDialog> {
 
   Future<void> _onSubmitAsync() async {
     var username = await _username;
-    FirebaseFirestore.instance.addWeightStat(double.parse(_weightController.text), _date!, username);
+    FirebaseFirestore.instance.addWeightGoal(double.parse(_weightController.text), username);
   }
 
   bool onSubmit() {
@@ -54,18 +52,10 @@ class _AddWeightDialogState extends State<AddWeightDialog> {
     return false;
   }
 
-  void onDateSubmitted(DateTime value) {
-    _date = value;
-  }
-
   @override
   Widget build(BuildContext context) {
-    var initialDate = DateTime.now();
-
-    _date = initialDate;
-
     return FormDialog(
-      title: "Add Weight",
+      title: "Add Weight Goal",
       form: Form(
         key: _formKey,
         child: Column(
@@ -77,12 +67,6 @@ class _AddWeightDialogState extends State<AddWeightDialog> {
               autocorrect: false,
               validator: (value) => validateWeight(value),
               controller: _weightController,
-            ),
-            InputDatePickerFormField(
-              initialDate: _date,
-              firstDate: initialDate.copyWith(month: initialDate.month - 1),
-              lastDate: initialDate,
-              onDateSubmitted: (value) => onDateSubmitted(value),
             ),
           ]),
         ),

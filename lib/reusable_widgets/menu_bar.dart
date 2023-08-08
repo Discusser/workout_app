@@ -11,9 +11,11 @@ class DirectionalMenuBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(width: width, height: height,
-        child: MenuBar(children: [Directionality(textDirection: textDirection, child: SubmenuButton(menuChildren: children, child: child))])
-    );
+    return SizedBox(
+        width: width,
+        height: height,
+        child:
+            MenuBar(children: [Directionality(textDirection: textDirection, child: SubmenuButton(menuChildren: children, child: child))]));
   }
 }
 
@@ -25,6 +27,10 @@ class SubmenuMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SubmenuButton(menuStyle: MenuStyle(alignment: Alignment.topLeft.add(Alignment.topCenter * 4)), menuChildren: menuChildren, child: child);
+    return SubmenuButton(
+      menuStyle: const MenuStyle(),
+      menuChildren: menuChildren,
+      child: child,
+    );
   }
 }

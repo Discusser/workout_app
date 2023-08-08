@@ -9,6 +9,7 @@ import 'package:workout_app/pages/settings.dart';
 
 import '../firebase/firestore_types.dart';
 import '../reusable_widgets/containers.dart';
+import '../reusable_widgets/form_dialog.dart';
 import '../reusable_widgets/goal.dart';
 import '../reusable_widgets/scrollables.dart';
 import '../reusable_widgets/texts.dart';
@@ -27,55 +28,200 @@ class SectionTitle extends StatelessWidget {
   }
 }
 
-class WeekSummary extends StatelessWidget {
+class WeekSummary extends StatefulWidget {
   const WeekSummary({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // todo: make this dynamic
-    // todo: add the ability to add the data
-    var listElements = [
-      const StatisticText(
-        text: "7.8 hours working out",
-        progress: ProgressColor.up,
-        value: "7%",
-      ),
-      const StatisticText(
-        text: "12 km of cardio",
-        progress: ProgressColor.down,
-        value: "4%",
-      ),
-      const StatisticText(
-        text: "4 PRs broken",
-      ),
-      StatisticText(
-        text: "1.7 kg lost",
-        progress: ProgressColor.progressive(70.67),
-        value: "69.4 kg",
-      ),
-    ];
+  State<WeekSummary> createState() => _WeekSummaryState();
+}
 
-    var columnBodyRows = <Row>[];
+class _WeekSummaryState extends State<WeekSummary> {
+  late Future<String> _username;
+  late Future<ComparativeStatisticsModel> _statsFuture;
+  late Future<double?> _weightGoalFuture;
 
-    for (var element in listElements) {
-      columnBodyRows.add(Row(children: [
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    Provider.of<StatisticChangeModel>(context);
+
+    _username = Provider.of<UserModel>(context).username;
+    _statsFuture = getStats();
+    _weightGoalFuture = getWeightGoal();
+  }
+
+  Future<double?> getWeightGoal() async {
+    var username = await _username;
+    return await FirebaseFirestore.instance.getWeightGoal(username);
+  }
+
+  Future<ComparativeStatisticsModel> getStats() async {
+    var username = await _username;
+
+    var before = await FirebaseFirestore.instance.getPreviousStats(username);
+    var after = await FirebaseFirestore.instance.getStats(username);
+
+    return ComparativeStatisticsModel(before: before, after: after);
+  }
+
+  Widget _constructRow(Widget statisticText) {
+    return Row(
+      children: [
         const Text("•"),
         const SizedBox(
           width: 4,
         ),
-        element
-      ]));
+        statisticText
+      ],
+    );
+  }
+
+  Widget constructListElements(ComparativeStatisticsModel model) {
+    double validate(double value, [int? digits]) {
+      return value.isFinite ? double.parse(value.toStringAsFixed(digits ?? 2)) : 0.0;
     }
+
+    ProgressColor color(double value) {
+      var comparison = validate(value).compareTo(0.0);
+      return comparison == 0
+          ? ProgressColor.none
+          : comparison > 0
+              ? ProgressColor.up
+              : ProgressColor.down;
+    }
+
+    String percent(double value) {
+      return "${validate(value)}%";
+    }
+
+    var children = <Widget>[];
+    var before = model.before;
+    var after = model.after;
+
+    if (before == null || after == null) {
+      return const Column(children: []);
+    }
+
+    {
+      // Cardio
+      var difference = (after.cardioTotalDistance - before.cardioTotalDistance) / before.cardioTotalDistance * 100;
+      children.add(_constructRow(
+        StatisticText(
+          text: "${validate(after.cardioTotalDistance)} km of cardio",
+          progress: color(difference),
+          value: percent(difference),
+        ),
+      ));
+    }
+    {
+      // Weight
+      // TODO: Let user pick the goal weight for progressive color
+      var difference = (after.weightAverageWeight - before.weightAverageWeight) / before.weightAverageWeight * 100;
+      var maxDistance = Provider.of<SettingsModel>(context).preferences.getDouble("max_weight_tolerance")!;
+      children.add(_constructRow(FutureBuilder(
+        future: _weightGoalFuture,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return StatisticText(
+              text: "${validate(after.weightAverageWeight, 1)} kg",
+              progress: ProgressColor.progressive(color(difference), after.weightAverageWeight, snapshot.data, maxDistance),
+              value: percent(difference),
+            );
+          } else {
+            return StatisticText(
+              text: "${validate(after.weightAverageWeight, 1)} kg",
+              progress: ProgressColor.progressive(color(difference), after.weightAverageWeight, null, maxDistance),
+              value: percent(difference),
+            );
+          }
+        },
+      )));
+      // builder: (context, snapshot) {
+      //      if (snapshot.hasData) {
+      //       return StatisticText(
+      //         text: "${validate(after.weightAverageWeight)} kg",
+      //         progress: ProgressColor.progressive(color(difference), 40, snapshot.data, maxDistance), // TODO: change this value,
+      //         value: percent(difference),
+      //       )
+      //      } else {
+      //       return const Text("Fetching goal weight..");
+      //      }
+      //     }
+    }
+    {
+      // Workouts
+      var difference = (after.workoutTotalTime - before.workoutTotalTime) / before.workoutTotalTime * 100;
+      children.add(_constructRow(
+        StatisticText(
+          text: "${validate(after.workoutTotalTime / 60)} hours working out",
+          progress: color(difference),
+          value: percent(difference),
+        ),
+      ));
+    }
+
+    return Column(mainAxisAlignment: MainAxisAlignment.start, mainAxisSize: MainAxisSize.max, children: children);
+  }
+
+  void displayInfo() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          child: PaddedContainer(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(style: Theme.of(context).text.headlineSmall, "Why is there no progress?"),
+                Text(
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).text.bodyMedium,
+                  "This section calculates your data from the current week, and compares it to last week's data. If you're wondering why "
+                  "your progress is still at 0.0%, it probably means that there is no data to compare to from last week",
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var listElements = FutureBuilder(
+      future: _statsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return constructListElements(snapshot.data!);
+        } else {
+          return Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.max, children: [
+            Text("Calculating statistics...", style: Theme.of(context).text.titleMedium),
+            // Container(margin: const EdgeInsets.all(8.0), height: 2.0, child: const LinearProgressIndicator()),
+          ]);
+        }
+      },
+    );
 
     return PaddedContainer(
       child: Column(
         children: [
-          const SectionTitle(text: "Past 7 days"),
-          Container(
-              alignment: Alignment.centerLeft,
-              child: Column(
-                children: columnBodyRows,
-              )),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              const SectionTitle(text: "Past 7 days"),
+              Align(alignment: Alignment.centerRight, child: IconButton(onPressed: displayInfo, icon: const Icon(Icons.info_outline))),
+            ],
+          ),
+          Container(alignment: Alignment.centerLeft, child: listElements),
           const Divider(
             thickness: 2,
           )
@@ -150,9 +296,13 @@ class _GoalsListViewState extends State<GoalsListView> {
   @override
   void initState() {
     super.initState();
+  }
 
-    _username = Provider.of<UserModel>(context, listen: false).username;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
+    _username = Provider.of<UserModel>(context).username;
     _goalsFuture = getGoals();
   }
 

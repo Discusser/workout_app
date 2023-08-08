@@ -26,8 +26,8 @@ class _AddWorkoutDialogState extends State<AddWorkoutDialog> {
   String? _name;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
     _username = Provider.of<UserModel>(context, listen: false).username;
     _workoutsFuture = getWorkouts();
@@ -59,6 +59,7 @@ class _AddWorkoutDialogState extends State<AddWorkoutDialog> {
   bool onSubmit() {
     if (_formKey.currentState!.validate()) {
       _onSubmitAsync();
+      Provider.of<StatisticChangeModel>(context, listen: false).change();
       context.snackbar("Added workout!", beforeText: [const Icon(Icons.check, color: AppColors.success)]);
       return true;
     }

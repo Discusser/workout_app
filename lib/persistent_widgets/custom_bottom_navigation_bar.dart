@@ -4,6 +4,7 @@ import 'package:workout_app/extensions/theme_helper.dart';
 import '../reusable_widgets/dialogs/add_cardio_dialog.dart';
 import '../reusable_widgets/dialogs/add_weight_dialog.dart';
 import '../reusable_widgets/dialogs/add_workout_dialog.dart';
+import '../reusable_widgets/dialogs/set_goal_dialog.dart';
 import '../reusable_widgets/menu_bar.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
@@ -28,7 +29,10 @@ class CustomBottomNavigationBar extends StatelessWidget {
           SubmenuMenuItem(menuChildren: [
             MenuItemButton(onPressed: () => _showDialog(context, const AddWorkoutDialog()), child: const Text("Workout")),
             MenuItemButton(onPressed: () => _showDialog(context, const AddCardioDialog()), child: const Text("Cardio")),
-            MenuItemButton(onPressed: () => _showDialog(context, const AddWeightDialog()), child: const Text("Weight")),
+            SubmenuMenuItem(menuChildren: [
+              MenuItemButton(onPressed: () => _showDialog(context, const SetGoalDialog()), child: const Text("Set Goal")),
+              MenuItemButton(onPressed: () => _showDialog(context, const AddWeightDialog()), child: const Text("Add")),
+            ], child: const Text("Weight"))
           ], child: const Text("Add")),
         ],
         child: const Text("More"));
