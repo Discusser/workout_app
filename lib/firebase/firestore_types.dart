@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:workout_app/pages/history.dart';
+import 'package:workout_app/pages/statistics.dart';
 
 class WeightModel extends HasFormatteableData {
   WeightModel({required this.date, required this.weight});

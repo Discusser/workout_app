@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:workout_app/extensions/string_helper.dart';
-import 'package:workout_app/pages/history.dart';
+import 'package:workout_app/pages/statistics.dart';
 
 import '../reusable_widgets/containers.dart';
 import '../reusable_widgets/loading.dart';

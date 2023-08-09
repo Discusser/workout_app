@@ -431,7 +431,7 @@ class _GoalsListViewState extends State<GoalsListView> {
     Widget goals;
     if (_goals.isEmpty) {
       goals = FutureBuilder(
-        future: _goalsFuture, // This is fine because the getGoals function is smart and will only fetch from database if necessary
+        future: _goalsFuture,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             _goals = snapshot.data!;
@@ -449,9 +449,10 @@ class _GoalsListViewState extends State<GoalsListView> {
     }
 
     return PaddedContainer(
-        child: Column(
-      children: [title, goals],
-    ));
+      child: Column(
+        children: [title, goals],
+      ),
+    );
   }
 }
 
