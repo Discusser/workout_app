@@ -11,6 +11,7 @@ import 'package:workout_app/pages/plotted_data.dart';
 import 'package:workout_app/reusable_widgets/dialogs/set_goal_dialog.dart';
 import 'package:workout_app/reusable_widgets/loading.dart';
 import 'package:workout_app/reusable_widgets/scrollables.dart';
+import 'package:workout_app/route_manager.dart';
 import 'package:workout_app/theme/app_theme.dart';
 
 import '../reusable_widgets/containers.dart';
@@ -143,9 +144,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 
   void plotData(Future<List<HasFormatteableData>> future, String title) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => PlottedDataPage(data: future, title: title),
-    ));
+    RouteManager.push(context, (context) => PlottedDataPage(data: future, title: title));
   }
 
   Widget makeTableFromFuture(String title, Future<List<HasFormatteableData>> future) {

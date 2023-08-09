@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workout_app/pages/home.dart';
 import 'package:workout_app/pages/settings.dart';
+import 'package:workout_app/pages/statistics.dart';
 import 'package:workout_app/reusable_widgets/form_dialog.dart';
 import 'package:workout_app/user_data.dart';
 
@@ -35,4 +36,27 @@ void main() async {
     ],
     child: const MyApp(),
   ));
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    var settingsModel = Provider.of<SettingsModel>(context);
+
+    return MaterialApp(
+      title: 'Workout App',
+      theme: settingsModel.get("dark_theme") == true
+          ? ThemeData.dark(useMaterial3: true)
+          : ThemeData.light(useMaterial3: true),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const HomePage(),
+        '/settings': (context) => SettingsPage(preferences: settingsModel.preferences),
+        '/statistics': (context) => const StatisticsPage()
+      },
+      debugShowCheckedModeBanner: false,
+    );
+  }
 }

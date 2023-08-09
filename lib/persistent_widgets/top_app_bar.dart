@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../pages/settings.dart';
+import '../route_manager.dart';
 import '../user_data.dart';
 
 class TopAppBar extends StatefulWidget implements PreferredSizeWidget {
@@ -24,12 +25,6 @@ class _TopAppBarState extends State<TopAppBar> {
     _username = Provider.of<UserModel>(context).username;
   }
 
-  void settings(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => SettingsPage(preferences: Provider.of<SettingsModel>(context).preferences),
-    ));
-  }
-
   @override
   Widget build(BuildContext context) {
     return AppBar(
@@ -43,7 +38,12 @@ class _TopAppBarState extends State<TopAppBar> {
           }
         },
       ),
-      actions: [IconButton(onPressed: () => settings(context), icon: const Icon(Icons.settings))],
+      actions: [
+        IconButton(
+          onPressed: () => RouteManager.pushNamed(context, '/settings'),
+          icon: const Icon(Icons.settings),
+        )
+      ],
     );
   }
 }

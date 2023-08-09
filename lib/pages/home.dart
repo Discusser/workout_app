@@ -461,28 +461,14 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      children: [
-        WeekSummary(),
-        WorkoutListView(),
-        GoalsListView(),
-      ],
-    );
-  }
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Workout App',
-      theme: Provider.of<SettingsModel>(context).get("dark_theme") == true
-          ? ThemeData.dark(useMaterial3: true)
-          : ThemeData.light(useMaterial3: true),
-      home: const GenericPage(body: HomePage()),
-      debugShowCheckedModeBanner: false,
+    return const GenericPage(
+      body: Column(
+        children: [
+          WeekSummary(),
+          WorkoutListView(),
+          GoalsListView(),
+        ],
+      ),
     );
   }
 }
