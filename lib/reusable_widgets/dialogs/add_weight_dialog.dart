@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:workout_app/extensions/message_helper.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
 
 import '../../theme/app_theme.dart';
 import '../../user_data.dart';
+import '../date_picker.dart';
 import '../form_dialog.dart';
 
 class AddWeightDialog extends StatefulWidget {
@@ -18,10 +20,9 @@ class AddWeightDialog extends StatefulWidget {
 class _AddWeightDialogState extends State<AddWeightDialog> {
   final _formKey = GlobalKey<FormState>();
   final _weightController = TextEditingController();
+  final _dateController = TextEditingController();
 
   late Future<String> _username;
-
-  DateTime? _date;
 
   @override
   void didChangeDependencies() {
@@ -40,7 +41,11 @@ class _AddWeightDialogState extends State<AddWeightDialog> {
 
   Future<void> _onSubmitAsync() async {
     var username = await _username;
-    FirebaseFirestore.instance.addWeightStat(double.parse(_weightController.text), _date!, username);
+    FirebaseFirestore.instance.addWeightStat(
+      double.parse(_weightController.text),
+      DateFormat("dd-MM-yyyy").parse(_dateController.text),
+      username,
+    );
   }
 
   bool onSubmit() {
@@ -54,16 +59,8 @@ class _AddWeightDialogState extends State<AddWeightDialog> {
     return false;
   }
 
-  void onDateSubmitted(DateTime value) {
-    _date = value;
-  }
-
   @override
   Widget build(BuildContext context) {
-    var initialDate = DateTime.now();
-
-    _date = initialDate;
-
     return FormDialog(
       title: "Add Weight",
       form: Form(
@@ -78,12 +75,9 @@ class _AddWeightDialogState extends State<AddWeightDialog> {
               validator: (value) => validateWeight(value),
               controller: _weightController,
             ),
-            InputDatePickerFormField(
-              initialDate: _date,
-              firstDate: initialDate.copyWith(month: initialDate.month - 1),
-              lastDate: initialDate,
-              onDateSubmitted: (value) => onDateSubmitted(value),
-            ),
+            FancyDatePicker(
+              controller: _dateController,
+            )
           ]),
         ),
       ),

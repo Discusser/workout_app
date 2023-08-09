@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:workout_app/extensions/message_helper.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
 
 import '../../theme/app_theme.dart';
 import '../../user_data.dart';
+import '../date_picker.dart';
 import '../form_dialog.dart';
 
 class AddWorkoutDialog extends StatefulWidget {
@@ -18,11 +20,11 @@ class AddWorkoutDialog extends StatefulWidget {
 class _AddWorkoutDialogState extends State<AddWorkoutDialog> {
   final _formKey = GlobalKey<FormState>();
   final _minutesController = TextEditingController();
+  final _dateController = TextEditingController();
 
   late Future<List<String>> _workoutsFuture;
   late Future<String> _username;
 
-  DateTime? _date;
   String? _name;
 
   @override
@@ -53,7 +55,12 @@ class _AddWorkoutDialogState extends State<AddWorkoutDialog> {
 
   Future<void> _onSubmitAsync() async {
     var username = await _username;
-    FirebaseFirestore.instance.addWorkoutStat(_date!, int.parse(_minutesController.text), _name!, username);
+    FirebaseFirestore.instance.addWorkoutStat(
+      DateFormat("dd-MM-yyyy").parse(_dateController.text),
+      int.parse(_minutesController.text),
+      _name!,
+      username,
+    );
   }
 
   bool onSubmit() {
@@ -73,16 +80,8 @@ class _AddWorkoutDialogState extends State<AddWorkoutDialog> {
     }
   }
 
-  void onDateSubmitted(DateTime value) {
-    _date = value;
-  }
-
   @override
   Widget build(BuildContext context) {
-    var initialDate = DateTime.now();
-
-    _date = initialDate;
-
     var dropdown = FutureBuilder(
       future: _workoutsFuture,
       builder: (context, snapshot) {
@@ -119,11 +118,8 @@ class _AddWorkoutDialogState extends State<AddWorkoutDialog> {
               validator: (value) => validateMinutes(value),
               controller: _minutesController,
             ),
-            InputDatePickerFormField(
-              initialDate: _date,
-              firstDate: initialDate.copyWith(month: initialDate.month - 1),
-              lastDate: initialDate,
-              onDateSubmitted: (value) => onDateSubmitted(value),
+            FancyDatePicker(
+              controller: _dateController,
             ),
           ]),
         ),

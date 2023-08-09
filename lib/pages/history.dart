@@ -13,6 +13,7 @@ import 'package:workout_app/reusable_widgets/scrollables.dart';
 import 'package:workout_app/theme/app_theme.dart';
 
 import '../reusable_widgets/containers.dart';
+import '../reusable_widgets/form_dialog.dart';
 import '../user_data.dart';
 
 abstract class HasFormatteableData {
@@ -39,6 +40,8 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    Provider.of<StatisticChangeModel>(context);
 
     _username = Provider.of<UserModel>(context, listen: false).username;
     _workoutsFuture = getWorkouts();

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/rendering/viewport_offset.dart';
 
 class ScrollableBody extends StatelessWidget {
   const ScrollableBody({super.key, required this.child, scrollDirection}) : scrollDirection = scrollDirection ?? Axis.vertical;
