@@ -109,6 +109,33 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
     return result.docs.map((e) => e.data()).toList();
   }
 
+  Future<List<WorkoutSessionModel>> getWorkouts(String username) async {
+    var result = await colStats(username)
+        .collection("workouts")
+        .orderBy("date", descending: true)
+        .withConverter(fromFirestore: WorkoutSessionModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
+        .get();
+    return result.docs.map((e) => e.data()).toList();
+  }
+
+  Future<List<CardioSessionModel>> getCardio(String username) async {
+    var result = await colStats(username)
+        .collection("cardio")
+        .orderBy("date", descending: true)
+        .withConverter(fromFirestore: CardioSessionModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
+        .get();
+    return result.docs.map((e) => e.data()).toList();
+  }
+
+    Future<List<WeightModel>> getWeight(String username) async {
+    var result = await colStats(username)
+        .collection("weight")
+        .orderBy("date", descending: true)
+        .withConverter(fromFirestore: WeightModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
+        .get();
+    return result.docs.map((e) => e.data()).toList();
+  }
+
   Future<StatisticsModel?> getPreviousStats(String username) async {
     var cardio = await getStatWeekBefore("cardio", username);
     var weight = await getStatWeekBefore("weight", username);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:workout_app/extensions/theme_helper.dart';
 
@@ -9,9 +10,13 @@ import '../user_data.dart';
 import 'login.dart';
 
 class GenericPage extends StatelessWidget {
-  const GenericPage({super.key, required this.body});
+  const GenericPage({super.key, required this.body, scrollDirection, scrollable})
+      : scrollDirection = scrollDirection ?? Axis.vertical,
+        scrollable = scrollable ?? true;
 
   final Widget body;
+  final Axis scrollDirection;
+  final bool scrollable;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +28,7 @@ class GenericPage extends StatelessWidget {
       backgroundColor: Theme.of(context).color.background,
       appBar: const TopAppBar(),
       body: SafeArea(
-        child: ScrollableBody(child: body),
+        child: scrollable ? ScrollableBody(scrollDirection: scrollDirection, child: body) : body,
       ),
       bottomNavigationBar: const CustomBottomNavigationBar(),
     );

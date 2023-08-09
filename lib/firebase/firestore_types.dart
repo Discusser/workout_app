@@ -1,4 +1,150 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'package:workout_app/pages/history.dart';
+
+class WeightModel extends HasFormatteableData {
+  WeightModel({required this.date, required this.weight});
+
+  DateTime date;
+  double weight;
+
+  factory WeightModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
+    var data = snapshot.data()!;
+    return WeightModel(date: data["date"].toDate(), weight: data["weight"].toDouble());
+  }
+
+  @override
+  Map<String, dynamic> toFirestore() {
+    return {
+      "weight": weight,
+      "date": date,
+    };
+  }
+
+  @override
+  List<String> toFormattedTable() {
+    return [
+      "$weight kg",
+      DateFormat("dd-MM-yyyy").format(date),
+    ];
+  }
+
+  @override
+  String getXAxisName() {
+    return "date";
+  }
+
+  @override
+  String getYAxisName() {
+    return "weight";
+  }
+
+  @override
+  String getYAxisFormat() {
+    return "{value} kg";
+  }
+}
+
+class CardioSessionModel extends HasFormatteableData {
+  CardioSessionModel({required this.date, required this.minutes, required this.kilometers});
+
+  final double minutes;
+  DateTime date;
+  double kilometers;
+
+  factory CardioSessionModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
+    var data = snapshot.data()!;
+    return CardioSessionModel(date: data["date"].toDate(), minutes: data["minutes"].toDouble(), kilometers: data["kilometers"].toDouble());
+  }
+
+  @override
+  Map<String, dynamic> toFirestore() {
+    return {
+      "kilometers": kilometers,
+      "minutes": minutes,
+      "date": date,
+    };
+  }
+
+  @override
+  List<String> toFormattedTable() {
+    return [
+      "$kilometers km",
+      "${minutes.toStringAsFixed(0)} minutes",
+      DateFormat("dd-MM-yyyy").format(date),
+    ];
+  }
+
+  @override
+  String getXAxisName() {
+    return "date";
+  }
+
+  @override
+  String getYAxisName() {
+    return "kilometers";
+  }
+
+  @override
+  String getYAxisFormat() {
+    return "{value} km";
+  }
+}
+
+class WorkoutSessionModel extends HasFormatteableData {
+  WorkoutSessionModel({required this.date, required this.minutes, required this.name});
+
+  final String name;
+  DateTime date;
+  double minutes;
+
+  factory WorkoutSessionModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
+    var data = snapshot.data()!;
+    return WorkoutSessionModel(date: data["date"].toDate(), minutes: data["minutes"].toDouble(), name: data["name"]);
+  }
+
+  @override
+  Map<String, dynamic> toFirestore() {
+    return {
+      "name": name,
+      "minutes": minutes,
+      "date": date,
+    };
+  }
+
+  @override
+  List<String> toFormattedTable() {
+    return [
+      name,
+      "${minutes.toStringAsFixed(0)} minutes",
+      DateFormat("dd-MM-yyyy").format(date),
+    ];
+  }
+
+  @override
+  String getXAxisName() {
+    return "date";
+  }
+
+  @override
+  String getYAxisName() {
+    return "minutes";
+  }
+
+  @override
+  String getYAxisFormat() {
+    return "{value} min";
+  }
+}
 
 class StatisticModel {
   StatisticModel({required this.data});
