@@ -9,6 +9,7 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
   DocumentReference<Map<String, dynamic>> colGoals(String username) => collection("goals").doc(username);
   DocumentReference<Map<String, dynamic>> colStats(String username) => collection("stats").doc(username);
   CollectionReference<Map<String, dynamic>> colWorkouts(String username) => collection("workouts").doc(username).collection("workouts");
+  CollectionReference<Map<String, dynamic>> colExercises() => collection("exercises");
 
   Future<List<Goal>> getGoals(String username, {bool Function(GoalModel oldGoal, GoalModel goal)? onSubmitted}) async {
     var list = <Goal>[];
@@ -211,6 +212,24 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
       e.yAxisFormat = "{value} min";
       return e;
     }).toList();
+  }
+
+  Future<List<ExerciseModel>> getExercises(String username) async {
+    var result = await colExercises().get();
+
+    return result.docs.map((e) => ExerciseModel.fromFirestore(e, null)).toList();
+  }
+
+  Future<List<String>> getWorkoutsWithExercise(String exercise, String username) async {
+    var result = await colWorkouts(username)
+        .withConverter(fromFirestore: WorkoutModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
+        .get();
+
+    return result.docs
+        .map((e) => e.data())
+        .where((element) => element.exercises.map((e) => e.name).contains(exercise))
+        .map((e) => e.name)
+        .toList();
   }
 
   List<T> getRecords<T, U>(QuerySnapshot<T> snapshot, Comparable<U> Function(T data) key) {

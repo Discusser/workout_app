@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import "package:path/path.dart" as p;
 import 'package:provider/provider.dart';
 import 'package:workout_app/extensions/message_helper.dart';
+import 'package:workout_app/extensions/string_helper.dart';
 import 'package:workout_app/extensions/theme_helper.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
 import 'package:workout_app/pages/settings.dart';
@@ -142,17 +142,6 @@ class _WeekSummaryState extends State<WeekSummary> {
           }
         },
       )));
-      // builder: (context, snapshot) {
-      //      if (snapshot.hasData) {
-      //       return StatisticText(
-      //         text: "${validate(after.weightAverageWeight)} kg",
-      //         progress: ProgressColor.progressive(color(difference), 40, snapshot.data, maxDistance), // TODO: change this value,
-      //         value: percent(difference),
-      //       )
-      //      } else {
-      //       return const Text("Fetching goal weight..");
-      //      }
-      //     }
     }
     {
       // Workouts
@@ -234,7 +223,7 @@ class _WeekSummaryState extends State<WeekSummary> {
 class WorkoutListView extends StatelessWidget {
   const WorkoutListView({super.key});
 
-  Widget _buildWorkout(BuildContext context, String name, String image, String time) {
+  Widget _buildWorkout(BuildContext context, String name, String exercise, String time) {
     return Container(
       decoration: BoxDecoration(border: Border.all(color: Colors.blueAccent), color: Theme.of(context).color.surface),
       margin: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -244,7 +233,7 @@ class WorkoutListView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(name, style: Theme.of(context).text.headlineSmall),
-          Expanded(child: Image.asset(image, width: 160)),
+          Expanded(child: Image.asset(exercise.asExerciseImage(), width: 160)),
           Text(time, style: Theme.of(context).text.titleSmall)
         ],
       ),
@@ -256,9 +245,9 @@ class WorkoutListView extends StatelessWidget {
     // todo: randomize image for workout based on workout exercise
     // todo: add the ability to create workouts
     var children = <Widget>[
-      _buildWorkout(context, "Push", p.join('assets', 'dips.png'), "45 minutes"),
-      _buildWorkout(context, "Pull", p.join('assets', 'romanian_deadlift.png'), "45 minutes"),
-      _buildWorkout(context, "Legs", p.join('assets', 'leg_extension.png'), "45 minutes")
+      _buildWorkout(context, "Push", "Dips", "45 minutes"),
+      _buildWorkout(context, "Pull", "Romanian Deadlift", "45 minutes"),
+      _buildWorkout(context, "Legs", "Leg Extensions", "45 minutes")
     ];
 
     return PaddedContainer(

@@ -2,6 +2,90 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:workout_app/main.dart';
 import 'package:workout_app/pages/statistics.dart';
 
+class WorkoutExerciseModel {
+  const WorkoutExerciseModel({required this.kg, required this.name, required this.reps, required this.sets});
+
+  final int kg;
+  final String name;
+  final int reps;
+  final int sets;
+
+  factory WorkoutExerciseModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
+    return WorkoutExerciseModel.fromMap(snapshot.data()!);
+  }
+
+  factory WorkoutExerciseModel.fromMap(Map<String, dynamic> data) {
+    return WorkoutExerciseModel(kg: data["kg"], name: data["name"], reps: data["reps"], sets: data["sets"]);
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      "kg": kg,
+      "name": name,
+      "reps": reps,
+      "sets": sets,
+    };
+  }
+}
+
+class WorkoutModel {
+  const WorkoutModel({required this.exercises, required this.name});
+
+  final List<WorkoutExerciseModel> exercises;
+  final String name;
+
+  factory WorkoutModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
+    var exercises = <WorkoutExerciseModel>[];
+    var data = snapshot.data()!;
+    for (var exercise in data["exercises"]) {
+      exercises.add(WorkoutExerciseModel.fromMap(exercise));
+    }
+
+    return WorkoutModel(exercises: exercises, name: data["name"]);
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      "exercises": exercises,
+      "name": name,
+    };
+  }
+}
+
+class ExerciseModel {
+  const ExerciseModel({required this.name, required this.muscles, required this.description});
+
+  final String name;
+  final List<String> muscles;
+  final String description;
+
+  factory ExerciseModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
+    var data = snapshot.data()!;
+    return ExerciseModel(
+      name: data["name"],
+      muscles: (data["muscles"] as List<dynamic>).map((e) => (e as String)).toList(),
+      description: data["description"],
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      "name": name,
+      "muscles": muscles,
+      "description": description,
+    };
+  }
+}
+
 class WeightModel extends HasFormatteableData {
   WeightModel({required this.date, required this.weight, xAxisName, yAxisName, yAxisFormat})
       : super(
@@ -18,7 +102,10 @@ class WeightModel extends HasFormatteableData {
     SnapshotOptions? options,
   ) {
     var data = snapshot.data()!;
-    return WeightModel(date: data["date"].toDate(), weight: data["weight"].toDouble());
+    return WeightModel(
+      date: (data["date"] as Timestamp).toDate(),
+      weight: (data["weight"] as num).toDouble(),
+    );
   }
 
   @override
@@ -55,7 +142,11 @@ class CardioSessionModel extends HasFormatteableData {
     SnapshotOptions? options,
   ) {
     var data = snapshot.data()!;
-    return CardioSessionModel(date: data["date"].toDate(), minutes: data["minutes"].toDouble(), kilometers: data["kilometers"].toDouble());
+    return CardioSessionModel(
+      date: (data["date"] as Timestamp).toDate(),
+      minutes: (data["minutes"] as num).toDouble(),
+      kilometers: (data["kilometers"] as num).toDouble(),
+    );
   }
 
   @override
@@ -94,7 +185,11 @@ class WorkoutSessionModel extends HasFormatteableData {
     SnapshotOptions? options,
   ) {
     var data = snapshot.data()!;
-    return WorkoutSessionModel(date: data["date"].toDate(), minutes: data["minutes"].toDouble(), name: data["name"]);
+    return WorkoutSessionModel(
+      date: (data["date"] as Timestamp).toDate(),
+      minutes: (data["minutes"] as num).toDouble(),
+      name: data["name"],
+    );
   }
 
   @override

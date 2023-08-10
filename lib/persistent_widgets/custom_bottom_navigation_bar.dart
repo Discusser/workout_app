@@ -19,7 +19,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
           icon: Icon(Icons.emoji_events_outlined, color: color),
         ),
         IconButton(
-          onPressed: () {},
+          onPressed: () => RouteManager.pushNamed(context, '/search'),
           icon: Icon(Icons.search, color: color),
         ),
         IconButton(

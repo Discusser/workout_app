@@ -75,7 +75,7 @@ class _RecordsPageState extends State<RecordsPage> {
   }
 
   Widget _createForm() {
-    var dropdownItems = [
+    var dropdownItems = [ // TODO: add more options
       QueryDropdownItem(
         query: (username) => FirebaseFirestore.instance.getWorkoutTimeRecords(username),
         value: "Workout Time",

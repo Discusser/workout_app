@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:workout_app/pages/home.dart';
 import 'package:workout_app/pages/records.dart';
+import 'package:workout_app/pages/search.dart';
 import 'package:workout_app/pages/settings.dart';
 import 'package:workout_app/pages/statistics.dart';
 
@@ -10,6 +11,7 @@ class RouteManager {
     '/settings': (context) => const SettingsPage(),
     '/statistics': (context) => const StatisticsPage(),
     '/records': (context) => const RecordsPage(),
+    '/search': (context) => const SearchPage(),
   };
 
   static Future<Object?> push(BuildContext context, Widget Function(BuildContext context) builder) {
