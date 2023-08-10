@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:workout_app/extensions/message_helper.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
+import 'package:workout_app/main.dart';
 import 'package:workout_app/reusable_widgets/date_picker.dart';
 
 import '../../theme/app_theme.dart';
@@ -53,7 +53,7 @@ class _AddCardioDialogState extends State<AddCardioDialog> {
     FirebaseFirestore.instance.addCardioStat(
       double.parse(_kilometersController.text),
       int.parse(_minutesController.text),
-      DateFormat("dd-MM-yyyy").parse(_dateController.text),
+      MyApp.dateFormat.parse(_dateController.text),
       username,
     );
   }

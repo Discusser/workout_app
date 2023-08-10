@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:workout_app/extensions/theme_helper.dart';
-import 'package:workout_app/pages/home.dart';
-import 'package:workout_app/pages/statistics.dart';
 
 import '../route_manager.dart';
 
@@ -17,18 +15,12 @@ class CustomBottomNavigationBar extends StatelessWidget {
       height: 48 + 6 * 2,
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         IconButton(
-          onPressed: () {},
-          icon: Icon(
-            Icons.emoji_events_outlined,
-            color: color,
-          ),
+          onPressed: () => RouteManager.pushNamed(context, '/records'),
+          icon: Icon(Icons.emoji_events_outlined, color: color),
         ),
         IconButton(
           onPressed: () {},
-          icon: Icon(
-            Icons.search,
-            color: color,
-          ),
+          icon: Icon(Icons.search, color: color),
         ),
         IconButton(
           onPressed: () => RouteManager.clearAndPushNamed(context, '/'),
@@ -36,10 +28,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
         ),
         IconButton(
           onPressed: () => RouteManager.pushNamed(context, '/statistics'),
-          icon: Icon(
-            Icons.bar_chart,
-            color: color,
-          ),
+          icon: Icon(Icons.bar_chart, color: color),
         ),
       ]),
     );

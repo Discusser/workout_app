@@ -61,25 +61,25 @@ class _PlottedDataPageState extends State<PlottedDataPage> {
     data.sort((a, b) {
       var map = a.toFirestore();
       var map1 = b.toFirestore();
-      return map[a.getXAxisName()].compareTo(map1[b.getXAxisName()]);
+      return map[a.xAxisName].compareTo(map1[b.xAxisName]);
     });
     data = data.getRange(max(0, data.length - 30), data.length).toList();
 
     for (var element in data) {
       var map = element.toFirestore();
-      var x = discardTimestamp(map[element.getXAxisName()]);
-      var y = map[element.getYAxisName()];
+      var x = discardTimestamp(map[element.xAxisName]);
+      var y = map[element.yAxisName];
       dataSource.add(XYPair(x: x, y: y));
     }
 
     return SfCartesianChart(
       title: ChartTitle(text: title),
       primaryXAxis: DateTimeAxis(
-        title: AxisTitle(text: data[0].getXAxisName().capitalize()),
+        title: AxisTitle(text: data[0].xAxisName.capitalize()),
       ),
       primaryYAxis: NumericAxis(
-        title: AxisTitle(text: data[0].getYAxisName().capitalize()),
-        labelFormat: data[0].getYAxisFormat(),
+        title: AxisTitle(text: data[0].yAxisName.capitalize()),
+        labelFormat: data[0].yAxisFormat,
       ),
       trackballBehavior: _trackballBehavior,
       zoomPanBehavior: _zoomPanBehavior,

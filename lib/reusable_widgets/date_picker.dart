@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:workout_app/main.dart';
 
 class FancyDatePicker extends StatefulWidget {
-  FancyDatePicker({super.key, controller}) : controller = controller ?? TextEditingController();
+  FancyDatePicker({super.key, dateFormat, controller})
+      : dateFormat = dateFormat ?? MyApp.dateFormat,
+        controller = controller ?? TextEditingController();
 
+  final DateFormat dateFormat;
   final TextEditingController controller;
 
   @override
@@ -11,6 +15,13 @@ class FancyDatePicker extends StatefulWidget {
 }
 
 class _FancyDatePickerState extends State<FancyDatePicker> {
+  @override
+  void initState() {
+    super.initState();
+
+    widget.controller.text = widget.dateFormat.format(DateTime.now());
+  }
+
   Future<void> pickDate() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -20,7 +31,7 @@ class _FancyDatePickerState extends State<FancyDatePicker> {
     );
 
     if (pickedDate != null) {
-      String formattedDate = DateFormat('dd-MM-yyyy').format(pickedDate);
+      String formattedDate = widget.dateFormat.format(pickedDate);
 
       setState(() {
         widget.controller.text = formattedDate;

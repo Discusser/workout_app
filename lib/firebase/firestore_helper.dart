@@ -84,7 +84,7 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
         .limitToLast(14)
         .withConverter(fromFirestore: StatisticModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
         .get();
-    return result.docs.map((e) => e.data()).toList();
+    return mapToData(result);
   }
 
   Future<List<StatisticModel>> getStatWeekBefore(String statCollection, String username) async {
@@ -96,7 +96,7 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
         .limitToLast(7)
         .withConverter(fromFirestore: StatisticModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
         .get();
-    return result.docs.map((e) => e.data()).toList();
+    return mapToData(result);
   }
 
   Future<List<StatisticModel>> getStatPastWeek(String statCollection, String username) async {
@@ -106,7 +106,7 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
         .limitToLast(7)
         .withConverter(fromFirestore: StatisticModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
         .get();
-    return result.docs.map((e) => e.data()).toList();
+    return mapToData(result);
   }
 
   Future<List<WorkoutSessionModel>> getWorkouts(String username) async {
@@ -115,7 +115,7 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
         .orderBy("date", descending: true)
         .withConverter(fromFirestore: WorkoutSessionModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
         .get();
-    return result.docs.map((e) => e.data()).toList();
+    return mapToData(result);
   }
 
   Future<List<CardioSessionModel>> getCardio(String username) async {
@@ -124,16 +124,16 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
         .orderBy("date", descending: true)
         .withConverter(fromFirestore: CardioSessionModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
         .get();
-    return result.docs.map((e) => e.data()).toList();
+    return mapToData(result);
   }
 
-    Future<List<WeightModel>> getWeight(String username) async {
+  Future<List<WeightModel>> getWeight(String username) async {
     var result = await colStats(username)
         .collection("weight")
         .orderBy("date", descending: true)
         .withConverter(fromFirestore: WeightModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
         .get();
-    return result.docs.map((e) => e.data()).toList();
+    return mapToData(result);
   }
 
   Future<StatisticsModel?> getPreviousStats(String username) async {
@@ -168,7 +168,69 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
 
   Future<double?> getWeightGoal(String username) async {
     var result = await colStats(username).get();
-    print("Result is ${result.data()}");
     return result.data()?["weight_goal"];
+  }
+
+  Future<List<WorkoutSessionModel>> getWorkoutTimeRecords(String username) async {
+    var result = await colStats(username)
+        .collection("workouts")
+        .orderBy("date", descending: false)
+        .withConverter(fromFirestore: WorkoutSessionModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
+        .get();
+
+    return getRecords(result, (data) => data.minutes).map((e) {
+      e.yAxisName = "minutes";
+      e.yAxisFormat = "{value} min";
+      return e;
+    }).toList();
+  }
+
+  Future<List<CardioSessionModel>> getCardioDistanceRecords(String username) async {
+    var result = await colStats(username)
+        .collection("cardio")
+        .orderBy("date", descending: false)
+        .withConverter(fromFirestore: CardioSessionModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
+        .get();
+
+    return getRecords(result, (data) => data.kilometers).map((e) {
+      e.yAxisName = "kilometers";
+      e.yAxisFormat = "{value} km";
+      return e;
+    }).toList();
+  }
+
+  Future<List<CardioSessionModel>> getCardioTimeRecords(String username) async {
+    var result = await colStats(username)
+        .collection("cardio")
+        .orderBy("date", descending: false)
+        .withConverter(fromFirestore: CardioSessionModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
+        .get();
+
+    return getRecords(result, (data) => data.minutes).map((e) {
+      e.yAxisName = "minutes";
+      e.yAxisFormat = "{value} min";
+      return e;
+    }).toList();
+  }
+
+  List<T> getRecords<T, U>(QuerySnapshot<T> snapshot, Comparable<U> Function(T data) key) {
+    Comparable<U>? biggest;
+
+    var records = <T>[];
+
+    for (var doc in snapshot.docs) {
+      var data = doc.data();
+      var current = key(data);
+      if (biggest == null || Comparable.compare(current, biggest) > 0) {
+        records.add(data);
+        biggest = current;
+      }
+    }
+
+    return records.reversed.toList();
+  }
+
+  List<T> mapToData<T>(QuerySnapshot<T> snapshot) {
+    return snapshot.docs.map((e) => e.data()).toList();
   }
 }

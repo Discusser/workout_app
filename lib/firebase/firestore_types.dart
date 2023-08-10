@@ -1,9 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
+import 'package:workout_app/main.dart';
 import 'package:workout_app/pages/statistics.dart';
 
 class WeightModel extends HasFormatteableData {
-  WeightModel({required this.date, required this.weight});
+  WeightModel({required this.date, required this.weight, xAxisName, yAxisName, yAxisFormat})
+      : super(
+          xAxisName: xAxisName ?? "date",
+          yAxisName: yAxisName ?? "weight",
+          yAxisFormat: yAxisFormat ?? "{value} kg",
+        );
 
   DateTime date;
   double weight;
@@ -28,28 +33,18 @@ class WeightModel extends HasFormatteableData {
   List<String> toFormattedTable() {
     return [
       "$weight kg",
-      DateFormat("dd-MM-yyyy").format(date),
+      MyApp.dateFormat.format(date),
     ];
-  }
-
-  @override
-  String getXAxisName() {
-    return "date";
-  }
-
-  @override
-  String getYAxisName() {
-    return "weight";
-  }
-
-  @override
-  String getYAxisFormat() {
-    return "{value} kg";
   }
 }
 
 class CardioSessionModel extends HasFormatteableData {
-  CardioSessionModel({required this.date, required this.minutes, required this.kilometers});
+  CardioSessionModel({required this.date, required this.minutes, required this.kilometers, xAxisName, yAxisName, yAxisFormat})
+      : super(
+          xAxisName: xAxisName ?? "date",
+          yAxisName: yAxisName ?? "kilometers",
+          yAxisFormat: yAxisFormat ?? "{value} km",
+        );
 
   final double minutes;
   DateTime date;
@@ -77,28 +72,18 @@ class CardioSessionModel extends HasFormatteableData {
     return [
       "$kilometers km",
       "${minutes.toStringAsFixed(0)} minutes",
-      DateFormat("dd-MM-yyyy").format(date),
+      MyApp.dateFormat.format(date),
     ];
-  }
-
-  @override
-  String getXAxisName() {
-    return "date";
-  }
-
-  @override
-  String getYAxisName() {
-    return "kilometers";
-  }
-
-  @override
-  String getYAxisFormat() {
-    return "{value} km";
   }
 }
 
 class WorkoutSessionModel extends HasFormatteableData {
-  WorkoutSessionModel({required this.date, required this.minutes, required this.name});
+  WorkoutSessionModel({required this.date, required this.minutes, required this.name, xAxisName, yAxisName, yAxisFormat})
+      : super(
+          xAxisName: xAxisName ?? "date",
+          yAxisName: yAxisName ?? "minutes",
+          yAxisFormat: yAxisFormat ?? "{value} min",
+        );
 
   final String name;
   DateTime date;
@@ -126,23 +111,8 @@ class WorkoutSessionModel extends HasFormatteableData {
     return [
       name,
       "${minutes.toStringAsFixed(0)} minutes",
-      DateFormat("dd-MM-yyyy").format(date),
+      MyApp.dateFormat.format(date),
     ];
-  }
-
-  @override
-  String getXAxisName() {
-    return "date";
-  }
-
-  @override
-  String getYAxisName() {
-    return "minutes";
-  }
-
-  @override
-  String getYAxisFormat() {
-    return "{value} min";
   }
 }
 

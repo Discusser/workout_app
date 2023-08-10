@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:workout_app/extensions/message_helper.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
 
+import '../../main.dart';
 import '../../theme/app_theme.dart';
 import '../../user_data.dart';
 import '../date_picker.dart';
@@ -43,7 +43,7 @@ class _AddWeightDialogState extends State<AddWeightDialog> {
     var username = await _username;
     FirebaseFirestore.instance.addWeightStat(
       double.parse(_weightController.text),
-      DateFormat("dd-MM-yyyy").parse(_dateController.text),
+      MyApp.dateFormat.parse(_dateController.text),
       username,
     );
   }

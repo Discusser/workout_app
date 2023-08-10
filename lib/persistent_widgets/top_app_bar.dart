@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../pages/settings.dart';
 import '../route_manager.dart';
 import '../user_data.dart';
 

@@ -42,7 +42,7 @@ abstract class _SettingsOptionState<U, T extends SettingsOption<U>> extends Stat
     setState(() {
       if (newValue != null) {
         _value = newValue;
-        setValue(context, _value!);
+        setValue(context, _value as U);
         widget.onChanged();
       }
     });
@@ -155,15 +155,22 @@ class OptionWidget extends StatelessWidget {
 }
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key, required this.preferences});
-
-  final SharedPreferences preferences;
+  const SettingsPage({super.key});
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  late SharedPreferences _preferences;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    _preferences = Provider.of<SettingsModel>(context).preferences;
+  }
+
   void valueChanged() {
     setState(() {});
   }
@@ -184,7 +191,7 @@ class _SettingsPageState extends State<SettingsPage> {
         value: false,
         label: "Dark Theme",
         prefKey: "dark_theme",
-        preferences: widget.preferences,
+        preferences: _preferences,
         icon: Icons.brightness_3,
         onChanged: valueChanged,
       ),
@@ -192,7 +199,7 @@ class _SettingsPageState extends State<SettingsPage> {
         value: 20,
         label: "Maximum Weight Tolerance",
         prefKey: "max_weight_tolerance",
-        preferences: widget.preferences,
+        preferences: _preferences,
         icon: Icons.scale,
         onChanged: valueChanged,
       ),

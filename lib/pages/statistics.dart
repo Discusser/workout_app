@@ -22,60 +22,20 @@ import '../reusable_widgets/form_dialog.dart';
 import '../user_data.dart';
 
 abstract class HasFormatteableData {
+  HasFormatteableData({required this.xAxisName, required this.yAxisName, required this.yAxisFormat});
+
+  String xAxisName;
+  String yAxisName;
+  String yAxisFormat;
+
   Map<String, dynamic> toFirestore();
-  String getXAxisName();
-  String getYAxisName();
-  String getYAxisFormat();
   List<String> toFormattedTable();
 }
 
-class StatisticsPage extends StatefulWidget {
-  const StatisticsPage({super.key});
+class StatisticsHelper {
+  const StatisticsHelper({required this.context});
 
-  @override
-  State<StatisticsPage> createState() => _StatisticsPageState();
-}
-
-class _StatisticsPageState extends State<StatisticsPage> {
-  late Future<String> _username;
-  late Future<List<WorkoutSessionModel>> _workoutsFuture;
-  late Future<List<CardioSessionModel>> _cardioFuture;
-  late Future<List<WeightModel>> _weightFuture;
-
-  Widget? _dropdownValue;
-
-  void onPressed() {
-    if (_dropdownValue != null) {
-      showDialog(context: context, builder: (context) => _dropdownValue!);
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    Provider.of<StatisticChangeModel>(context);
-
-    _username = Provider.of<UserModel>(context, listen: false).username;
-    _workoutsFuture = getWorkouts();
-    _cardioFuture = getCardio();
-    _weightFuture = getWeight();
-  }
-
-  Future<List<WorkoutSessionModel>> getWorkouts() async {
-    var username = await _username;
-    return FirebaseFirestore.instance.getWorkouts(username);
-  }
-
-  Future<List<CardioSessionModel>> getCardio() async {
-    var username = await _username;
-    return FirebaseFirestore.instance.getCardio(username);
-  }
-
-  Future<List<WeightModel>> getWeight() async {
-    var username = await _username;
-    return FirebaseFirestore.instance.getWeight(username);
-  }
+  final BuildContext context;
 
   void _addHeader(List<TableRow> list, List<String> headers) {
     var children = <Widget>[];
@@ -165,7 +125,19 @@ class _StatisticsPageState extends State<StatisticsPage> {
     return FutureBuilder(
       future: future,
       builder: (context, snapshot) {
-        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+        if (snapshot.hasData) {
+          if (snapshot.data!.isEmpty) {
+            return PaddedContainer(
+              child: Column(
+                children: [
+                  sectionTitle,
+                  const SizedBox(height: 8.0),
+                  const Center(child: Text("There are no records to display")),
+                ],
+              ),
+            );
+          }
+
           var children = <TableRow>[];
           var headers = _getHeaders(snapshot.data![0]);
 
@@ -202,6 +174,55 @@ class _StatisticsPageState extends State<StatisticsPage> {
       },
     );
   }
+}
+
+class StatisticsPage extends StatefulWidget {
+  const StatisticsPage({super.key});
+
+  @override
+  State<StatisticsPage> createState() => _StatisticsPageState();
+}
+
+class _StatisticsPageState extends State<StatisticsPage> {
+  late Future<String> _username;
+  late Future<List<WorkoutSessionModel>> _workoutsFuture;
+  late Future<List<CardioSessionModel>> _cardioFuture;
+  late Future<List<WeightModel>> _weightFuture;
+
+  Widget? _dropdownValue;
+
+  void onPressed() {
+    if (_dropdownValue != null) {
+      showDialog(context: context, builder: (context) => _dropdownValue!);
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    Provider.of<StatisticChangeModel>(context);
+
+    _username = Provider.of<UserModel>(context, listen: false).username;
+    _workoutsFuture = getWorkouts();
+    _cardioFuture = getCardio();
+    _weightFuture = getWeight();
+  }
+
+  Future<List<WorkoutSessionModel>> getWorkouts() async {
+    var username = await _username;
+    return FirebaseFirestore.instance.getWorkouts(username);
+  }
+
+  Future<List<CardioSessionModel>> getCardio() async {
+    var username = await _username;
+    return FirebaseFirestore.instance.getCardio(username);
+  }
+
+  Future<List<WeightModel>> getWeight() async {
+    var username = await _username;
+    return FirebaseFirestore.instance.getWeight(username);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -229,17 +250,19 @@ class _StatisticsPageState extends State<StatisticsPage> {
       ),
     );
 
+    var helper = StatisticsHelper(context: context);
+
     return GenericPage(
       body: PaddedContainer(
         child: Column(
           children: [
             form,
             const Divider(),
-            makeTableFromFuture("Workouts", _workoutsFuture),
+            helper.makeTableFromFuture("Workouts", _workoutsFuture),
             const Divider(),
-            makeTableFromFuture("Cardio", _cardioFuture),
+            helper.makeTableFromFuture("Cardio", _cardioFuture),
             const Divider(),
-            makeTableFromFuture("Weight", _weightFuture),
+            helper.makeTableFromFuture("Weight", _weightFuture),
           ],
         ),
       ),
