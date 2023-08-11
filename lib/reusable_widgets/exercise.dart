@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:workout_app/extensions/string_helper.dart';
 import 'package:workout_app/extensions/theme_helper.dart';
@@ -44,32 +46,40 @@ class ExerciseCard extends StatelessWidget {
             ),
             const Divider(),
             Row(
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [Image.asset(model.name.asExerciseImage(), width: MediaQuery.of(context).size.width / 3)],
+                  children: [Image.asset(model.name.asExerciseImage(), width: MediaQuery.of(context).size.width / 2)],
                 ),
                 const SizedBox(width: 16.0),
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        model.muscles.join(", "),
-                        style: Theme.of(context).text.titleMedium,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
-                      ),
-                      Text(
-                        model.description,
-                        style: Theme.of(context).text.bodySmall,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 3,
-                      ),
-                    ],
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          () {
+                            var maxLines = 4;
+
+                            var muscles = Muscles.simplifyMuscleNames(model.targetMuscles, true);
+                            var length = muscles.length;
+                            muscles = muscles.sublist(0, min(maxLines, length));
+                            if (length > maxLines) {
+                              muscles.add("...");
+                            }
+                            return muscles.toSet().join("\n");
+                          }(),
+                          style: Theme.of(context).text.titleMedium,
+                          overflow: TextOverflow.ellipsis,
+                          // maxLines: 2,
+                        ),
+                      ],
+                    ),
                   ),
-                )
+                ),
               ],
             ),
           ],

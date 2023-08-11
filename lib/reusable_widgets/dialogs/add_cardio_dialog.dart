@@ -6,7 +6,6 @@ import 'package:workout_app/firebase/firestore_helper.dart';
 import 'package:workout_app/main.dart';
 import 'package:workout_app/reusable_widgets/date_picker.dart';
 
-import '../../theme/app_theme.dart';
 import '../../user_data.dart';
 import '../form_dialog.dart';
 
@@ -62,7 +61,7 @@ class _AddCardioDialogState extends State<AddCardioDialog> {
     if (_formKey.currentState!.validate()) {
       _onSubmitAsync();
       Provider.of<StatisticChangeModel>(context, listen: false).change();
-      context.snackbar("Added cardio!", beforeText: [const Icon(Icons.check, color: AppColors.success)]);
+      context.succesSnackbar("Added Cardio!");
       return true;
     }
 

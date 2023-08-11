@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
+import 'package:workout_app/pages/exercise.dart';
 import 'package:workout_app/pages/generic.dart';
 import 'package:workout_app/reusable_widgets/containers.dart';
 import 'package:workout_app/reusable_widgets/exercise.dart';
@@ -29,7 +30,7 @@ class _SearchPageState extends State<SearchPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _username = Provider.of<UserModel>(context, listen: false).username;
+    _username = Provider.of<UserModel>(context).username;
 
     _itemsFuture = getExercises();
   }
@@ -43,7 +44,9 @@ class _SearchPageState extends State<SearchPage> {
     setState(() {
       _visibleItems = items.where((element) {
         value = value.toLowerCase();
-        return element.name.toLowerCase().contains(value) || element.muscles.map((e) => e.toLowerCase()).join(" ").contains(value);
+        return element.name.toLowerCase().contains(value) ||
+            Muscles.simplifyMuscleNames(element.targetMuscles, true).map((e) => e.toLowerCase()).join(" ").contains(value) ||
+            element.targetMuscles.map((e) => e.toLowerCase()).join(" ").contains(value);
       }).toList();
     });
   }

@@ -52,27 +52,38 @@ class WorkoutModel {
 
   Map<String, dynamic> toFirestore() {
     return {
-      "exercises": exercises,
+      "exercises": exercises.map((e) => e.toFirestore()).toList(),
       "name": name,
     };
   }
 }
 
 class ExerciseModel {
-  const ExerciseModel({required this.name, required this.muscles, required this.description});
+  ExerciseModel({required this.name, required this.targetMuscles, assistingMuscles, stabilizingMuscles, required this.description})
+      : assistingMuscles = assistingMuscles ?? [],
+        stabilizingMuscles = stabilizingMuscles ?? [];
 
   final String name;
-  final List<String> muscles;
+  final List<String> targetMuscles;
+  final List<String> assistingMuscles;
+  final List<String> stabilizingMuscles;
   final String description;
+
+  static List<String> asStringList(List<dynamic> list) {
+    return list.map((e) => (e as String)).toList();
+  }
 
   factory ExerciseModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
     SnapshotOptions? options,
   ) {
     var data = snapshot.data()!;
+    var muscles = data["muscles"];
     return ExerciseModel(
       name: data["name"],
-      muscles: (data["muscles"] as List<dynamic>).map((e) => (e as String)).toList(),
+      targetMuscles: asStringList(muscles["target"] as List<dynamic>),
+      assistingMuscles: asStringList(muscles["assisting"] as List<dynamic>),
+      stabilizingMuscles: asStringList(muscles["stabilizing"] as List<dynamic>),
       description: data["description"],
     );
   }
@@ -80,7 +91,11 @@ class ExerciseModel {
   Map<String, dynamic> toFirestore() {
     return {
       "name": name,
-      "muscles": muscles,
+      "muscles": {
+        "target": targetMuscles,
+        "assisting": assistingMuscles,
+        "stabilizing": stabilizingMuscles,
+      },
       "description": description,
     };
   }

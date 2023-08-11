@@ -18,13 +18,14 @@ import '../user_data.dart';
 import 'generic.dart';
 
 class SectionTitle extends StatelessWidget {
-  const SectionTitle({super.key, required this.text});
+  const SectionTitle({super.key, required this.text, this.style});
 
   final String text;
+  final TextStyle? style;
 
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text(text, style: Theme.of(context).text.headlineMedium));
+    return Center(child: Text(text, style: style ?? Theme.of(context).text.headlineMedium));
   }
 }
 

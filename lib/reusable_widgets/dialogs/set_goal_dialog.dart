@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:workout_app/extensions/message_helper.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
 
-import '../../theme/app_theme.dart';
 import '../../user_data.dart';
 import '../form_dialog.dart';
 
@@ -45,7 +44,7 @@ class _SetGoalDialogState extends State<SetGoalDialog> {
     if (_formKey.currentState!.validate()) {
       _onSubmitAsync();
       Provider.of<StatisticChangeModel>(context, listen: false).change();
-      context.snackbar("Added weight!", beforeText: [const Icon(Icons.check, color: AppColors.success)]);
+      context.succesSnackbar("Set Weight Goal!");
       return true;
     }
 

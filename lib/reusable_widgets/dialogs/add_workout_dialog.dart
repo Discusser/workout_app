@@ -5,7 +5,6 @@ import 'package:workout_app/extensions/message_helper.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
 
 import '../../main.dart';
-import '../../theme/app_theme.dart';
 import '../../user_data.dart';
 import '../date_picker.dart';
 import '../form_dialog.dart';
@@ -31,7 +30,7 @@ class _AddWorkoutDialogState extends State<AddWorkoutDialog> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _username = Provider.of<UserModel>(context, listen: false).username;
+    _username = Provider.of<UserModel>(context).username;
     _workoutsFuture = getWorkouts();
   }
 
@@ -67,7 +66,7 @@ class _AddWorkoutDialogState extends State<AddWorkoutDialog> {
     if (_formKey.currentState!.validate()) {
       _onSubmitAsync();
       Provider.of<StatisticChangeModel>(context, listen: false).change();
-      context.snackbar("Added workout!", beforeText: [const Icon(Icons.check, color: AppColors.success)]);
+      context.succesSnackbar("Added Workout!");
       return true;
     }
 

@@ -36,7 +36,7 @@ class _RecordsPageState extends State<RecordsPage> {
 
     Provider.of<StatisticChangeModel>(context);
 
-    _username = Provider.of<UserModel>(context, listen: false).username;
+    _username = Provider.of<UserModel>(context).username;
   }
 
   void onPressed() async {
