@@ -8,16 +8,12 @@ import 'package:workout_app/firebase/firestore_types.dart';
 import 'package:workout_app/pages/generic.dart';
 import 'package:workout_app/pages/home.dart';
 import 'package:workout_app/pages/plotted_data.dart';
-import 'package:workout_app/reusable_widgets/dialogs/set_goal_dialog.dart';
 import 'package:workout_app/reusable_widgets/loading.dart';
 import 'package:workout_app/reusable_widgets/scrollables.dart';
 import 'package:workout_app/route_manager.dart';
 import 'package:workout_app/theme/app_theme.dart';
 
 import '../reusable_widgets/containers.dart';
-import '../reusable_widgets/dialogs/add_cardio_dialog.dart';
-import '../reusable_widgets/dialogs/add_weight_dialog.dart';
-import '../reusable_widgets/dialogs/add_workout_dialog.dart';
 import '../reusable_widgets/form_dialog.dart';
 import '../user_data.dart';
 
@@ -189,13 +185,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
   late Future<List<CardioSessionModel>> _cardioFuture;
   late Future<List<WeightModel>> _weightFuture;
 
-  Widget? _dropdownValue;
+  // Widget? _dropdownValue;
 
-  void onPressed() {
-    if (_dropdownValue != null) {
-      showDialog(context: context, builder: (context) => _dropdownValue!);
-    }
-  }
+  // void onPressed() {
+  //   if (_dropdownValue != null) {
+  //     showDialog(context: context, builder: (context) => _dropdownValue!);
+  //   }
+  // }
 
   @override
   void didChangeDependencies() {
@@ -226,29 +222,29 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    var dropdownItems = const [
-      DialogDropdownItem(dialog: AddWorkoutDialog(), value: "workout_session", child: Text("Workout Session")),
-      DialogDropdownItem(dialog: AddCardioDialog(), value: "cardio_session", child: Text("Cardio Session")),
-      DialogDropdownItem(dialog: AddWeightDialog(), value: "weight", child: Text("Weight")),
-      DialogDropdownItem(dialog: SetGoalDialog(), value: "weight_goal", child: Text("Weight Goal")),
-    ];
+    // var dropdownItems = const [
+    //   DialogDropdownItem(dialog: AddWorkoutDialog(), value: "workout_session", child: Text("Workout Session")),
+    //   DialogDropdownItem(dialog: AddCardioDialog(), value: "cardio_session", child: Text("Cardio Session")),
+    //   DialogDropdownItem(dialog: AddWeightDialog(), value: "weight", child: Text("Weight")),
+    //   DialogDropdownItem(dialog: SetGoalDialog(), value: "weight_goal", child: Text("Weight Goal")),
+    // ];
 
-    var form = Form(
-      child: PaddedContainer(
-        child: Row(
-          children: [
-            Expanded(
-              child: DropdownButtonFormField<String>(
-                items: dropdownItems,
-                hint: const Text("I want to add.."),
-                onChanged: (value) => _dropdownValue = dropdownItems.firstWhere((element) => element.value == value).dialog,
-              ),
-            ),
-            IconButton(icon: const Icon(Icons.add), onPressed: onPressed)
-          ],
-        ),
-      ),
-    );
+    // var form = Form(
+    //   child: PaddedContainer(
+    //     child: Row(
+    //       children: [
+    //         Expanded(
+    //           child: DropdownButtonFormField<String>(
+    //             items: dropdownItems,
+    //             hint: const Text("I want to add.."),
+    //             onChanged: (value) => _dropdownValue = dropdownItems.firstWhere((element) => element.value == value).dialog,
+    //           ),
+    //         ),
+    //         IconButton(icon: const Icon(Icons.add), onPressed: onPressed)
+    //       ],
+    //     ),
+    //   ),
+    // );
 
     var helper = StatisticsHelper(context: context);
 
@@ -256,8 +252,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
       body: PaddedContainer(
         child: Column(
           children: [
-            form,
-            const Divider(),
+            // form,
+            // const Divider(),
             helper.makeTableFromFuture("Workouts", _workoutsFuture),
             const Divider(),
             helper.makeTableFromFuture("Cardio", _cardioFuture),
@@ -268,10 +264,4 @@ class _StatisticsPageState extends State<StatisticsPage> {
       ),
     );
   }
-}
-
-class DialogDropdownItem<String> extends DropdownMenuItem<String> {
-  const DialogDropdownItem({super.key, required super.child, required super.value, required this.dialog});
-
-  final Widget dialog;
 }

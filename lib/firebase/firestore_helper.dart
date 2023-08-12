@@ -220,16 +220,18 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
     return result.docs.map((e) => ExerciseModel.fromFirestore(e, null)).toList();
   }
 
-  Future<List<String>> getWorkoutsWithExercise(String exercise, String username) async {
+  Future<List<WorkoutModel>> getWorkoutModels(String username) async {
     var result = await colWorkouts(username)
         .withConverter(fromFirestore: WorkoutModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
         .get();
 
-    return result.docs
-        .map((e) => e.data())
-        .where((element) => element.exercises.map((e) => e.name).contains(exercise))
-        .map((e) => e.name)
-        .toList();
+    return mapToData(result);
+  }
+
+  Future<List<String>> getWorkoutsWithExercise(String exercise, String username) async {
+    var result = await getWorkoutModels(username);
+
+    return result.where((element) => element.exercises.map((e) => e.name).contains(exercise)).map((e) => e.name).toList();
   }
 
   List<T> getRecords<T, U>(QuerySnapshot<T> snapshot, Comparable<U> Function(T data) key) {

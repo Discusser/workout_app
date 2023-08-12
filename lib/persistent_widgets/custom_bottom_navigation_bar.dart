@@ -24,7 +24,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
         ),
         IconButton(
           onPressed: () => RouteManager.pushNamed(context, '/workouts'),
-          icon: Icon(Icons.add_outlined, color: color),
+          icon: Icon(Icons.add, color: color),
         ),
         IconButton(
           onPressed: () => RouteManager.clearAndPushNamed(context, '/'),

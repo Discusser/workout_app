@@ -1,11 +1,17 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:workout_app/extensions/message_helper.dart';
+import 'package:workout_app/extensions/num_helper.dart';
 import 'package:workout_app/extensions/string_helper.dart';
 import 'package:workout_app/extensions/theme_helper.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
 import 'package:workout_app/pages/settings.dart';
+import 'package:workout_app/pages/workout.dart';
+import 'package:workout_app/reusable_widgets/loading.dart';
+import 'package:workout_app/route_manager.dart';
 
 import '../firebase/firestore_types.dart';
 import '../reusable_widgets/containers.dart';
@@ -88,13 +94,19 @@ class _WeekSummaryState extends State<WeekSummary> {
       return value.isFinite ? double.parse(value.toStringAsFixed(digits ?? 2)) : 0.0;
     }
 
-    ProgressColor color(double value) {
+    ProgressColor color(double value, [String? sign]) {
       var comparison = validate(value).compareTo(0.0);
-      return comparison == 0
+      var color = comparison == 0
           ? ProgressColor.none
           : comparison > 0
               ? ProgressColor.up
               : ProgressColor.down;
+
+      if (sign != null) {
+        color = ProgressColor(color: color.color, sign: sign);
+      }
+
+      return color;
     }
 
     String percent(double value) {
@@ -122,17 +134,19 @@ class _WeekSummaryState extends State<WeekSummary> {
     }
     {
       // Weight
-      // TODO: Let user pick the goal weight for progressive color
       var difference = (after.weightAverageWeight - before.weightAverageWeight) / before.weightAverageWeight * 100;
       var maxDistance = Provider.of<SettingsModel>(context).preferences.getDouble("max_weight_tolerance")!;
       children.add(_constructRow(FutureBuilder(
         future: _weightGoalFuture,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
+            var goal = snapshot.data!;
+            var weightCondition = after.weightAverageWeight < goal;
+            var weightColor = color(weightCondition ? difference : -difference, difference > 0 ? "+" : "-");
             return StatisticText(
               text: "${validate(after.weightAverageWeight, 1)} kg",
-              progress: ProgressColor.progressive(color(difference), after.weightAverageWeight, snapshot.data, maxDistance),
-              value: percent(difference),
+              progress: ProgressColor.progressive(weightColor, after.weightAverageWeight, goal, maxDistance),
+              value: percent(difference.abs()),
             );
           } else {
             return StatisticText(
@@ -221,47 +235,80 @@ class _WeekSummaryState extends State<WeekSummary> {
   }
 }
 
-class WorkoutListView extends StatelessWidget {
+class WorkoutListView extends StatefulWidget {
   const WorkoutListView({super.key});
 
-  Widget _buildWorkout(BuildContext context, String name, String exercise, String time) {
+  @override
+  State<WorkoutListView> createState() => _WorkoutListViewState();
+}
+
+class _WorkoutListViewState extends State<WorkoutListView> {
+  late Future<String> _username;
+  late Future<List<WorkoutModel>> _workoutsFuture;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    _username = Provider.of<UserModel>(context).username;
+
+    _workoutsFuture = getWorkouts();
+  }
+
+  Future<List<WorkoutModel>> getWorkouts() async {
+    var username = await _username;
+    return FirebaseFirestore.instance.getWorkoutModels(username);
+  }
+
+  Widget _buildWorkout(WorkoutModel model) {
+    var path = model.exercises[Random().nextInt(model.exercises.length)].name.asExerciseImage();
+
     return Container(
       decoration: BoxDecoration(border: Border.all(color: Colors.blueAccent), color: Theme.of(context).color.surface),
       margin: const EdgeInsets.symmetric(horizontal: 8.0),
       padding: const EdgeInsets.all(4.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(name, style: Theme.of(context).text.headlineSmall),
-          Expanded(child: Image.asset(exercise.asExerciseImage(), width: 160)),
-          Text(time, style: Theme.of(context).text.titleSmall)
-        ],
+      child: Material(
+        child: Ink(
+          child: InkWell(
+            onTap: () => RouteManager.push(context, (context) => WorkoutPage(model: model)),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(model.name, style: Theme.of(context).text.headlineSmall),
+                Expanded(child: Ink.image(image: AssetImage(path), width: MediaQuery.of(context).size.width / 2.5)),
+                Text("${model.minutes.removeTrailingZeros(2)} minutes", style: Theme.of(context).text.titleSmall)
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // todo: randomize image for workout based on workout exercise
-    // todo: add the ability to create workouts
-    var children = <Widget>[
-      _buildWorkout(context, "Push", "Dips", "45 minutes"),
-      _buildWorkout(context, "Pull", "Romanian Deadlift", "45 minutes"),
-      _buildWorkout(context, "Legs", "Leg Extensions", "45 minutes")
-    ];
+    var future = FutureBuilder(
+      future: _workoutsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          var children = snapshot.data!.map((e) => _buildWorkout(e)).toList();
+
+          return ScrollableListView(
+            scrollDirection: Axis.horizontal,
+            children: children,
+          );
+        } else {
+          return const LoadingFuture();
+        }
+      },
+    );
 
     return PaddedContainer(
         child: Column(
       children: [
         const SectionTitle(text: "Your Workouts"),
-        SizedBox(
-          height: MediaQuery.of(context).size.height / 4,
-          child: ScrollableListView(
-            scrollDirection: Axis.horizontal,
-            children: children,
-          ),
-        ),
+        SizedBox(height: MediaQuery.of(context).size.height / 4, child: future),
         const Divider(
           thickness: 2,
         )

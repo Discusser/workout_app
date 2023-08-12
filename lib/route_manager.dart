@@ -4,7 +4,7 @@ import 'package:workout_app/pages/records.dart';
 import 'package:workout_app/pages/search.dart';
 import 'package:workout_app/pages/settings.dart';
 import 'package:workout_app/pages/statistics.dart';
-import 'package:workout_app/pages/workouts.dart';
+import 'package:workout_app/pages/add_data.dart';
 
 class RouteManager {
   static final routes = {
@@ -13,7 +13,7 @@ class RouteManager {
     '/statistics': (context) => const StatisticsPage(),
     '/records': (context) => const RecordsPage(),
     '/search': (context) => const SearchPage(),
-    '/workouts': (context) => const WorkoutsPage(),
+    '/workouts': (context) => const AddDataPage(),
   };
 
   static Future<Object?> push(BuildContext context, Widget Function(BuildContext context) builder) {

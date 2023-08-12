@@ -102,12 +102,21 @@ class DoubleSettingsOption extends SettingsOption<double> {
 
 class _DoubleSettingsOptionState extends _SettingsOptionState<double, DoubleSettingsOption> {
   @override
+  void initState() {
+    super.initState();
+
+    widget.controller.text = widget.value.toString();
+  }
+
+  @override
   void setValue(BuildContext context, double newValue) {
     Provider.of<SettingsModel>(context, listen: false).setDouble(widget.prefKey, newValue);
   }
 
   @override
   Widget build(BuildContext context) {
+    widget.controller.text = _value.toString();
+
     return OptionWidget(
       title: Text("Max Weight Tolerance", style: Theme.of(context).text.bodyLarge),
       trailing: Expanded(
@@ -123,7 +132,7 @@ class _DoubleSettingsOptionState extends _SettingsOptionState<double, DoubleSett
           focusNode: widget.focusNode,
           keyboardType: TextInputType.number,
           textInputAction: TextInputAction.done,
-          maxLength: 3,
+          maxLength: 5,
           onSubmitted: (value) => onChanged(context, double.tryParse(value)),
         ),
       ),

@@ -111,23 +111,7 @@ class ExercisePage extends StatefulWidget {
 }
 
 class _ExercisePageState extends State<ExercisePage> {
-  // late Future<String> _username;
-  // late Future<List<String>> _workoutsFuture;
-
   bool _detailed = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    // _username = Provider.of<UserModel>(context).username;
-    // _workoutsFuture = getWorkouts();
-  }
-
-  // Future<List<String>> getWorkouts() async {
-  //   var username = await _username;
-  //   return FirebaseFirestore.instance.getWorkoutsWithExercise(widget.model.name, username);
-  // }
 
   Widget _createMuscleList(List<String> values) {
     values = _detailed ? values : Muscles.simplifyMuscleNames(values, !_detailed).toSet().toList();
@@ -217,41 +201,6 @@ class _ExercisePageState extends State<ExercisePage> {
     );
   }
 
-  // Widget _createMiscInfo() {
-  //   var futureBuilder = FutureBuilder(
-  //       future: _workoutsFuture,
-  //       builder: (context, snapshot) {
-  //         var textStyle = Theme.of(context).text.bodyLarge;
-  //         var children = <Widget>[Text("In workouts: ", style: textStyle)];
-
-  //         if (snapshot.hasData) {
-  //           if (snapshot.data!.isEmpty) {
-  //             children.add(Text("None", style: textStyle));
-  //           }
-  //           for (var value in snapshot.data!) {
-  //             children.add(Chip(
-  //               label: Text(value),
-  //               backgroundColor: AppColors.unusedBackground.withOpacity(0.25),
-  //               elevation: 4.0,
-  //               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-  //             ));
-  //           }
-  //         } else {
-  //           children.add(Text("Getting workouts", style: textStyle));
-  //         }
-
-  //         return Row(children: children);
-  //       });
-
-  //   return Column(
-  //     children: [
-  //       const SectionTitle(text: "More"),
-  //       const SizedBox(height: 8.0),
-  //       futureBuilder,
-  //     ],
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
     return GenericPage(
@@ -263,8 +212,6 @@ class _ExercisePageState extends State<ExercisePage> {
             _createExerciseMusclesWorked(),
             const Divider(),
             _createExerciseDescription(),
-            // const Divider(),
-            // _createMiscInfo(), // TODO: find something useful to add here, or remove this forever
           ],
         ),
       ),

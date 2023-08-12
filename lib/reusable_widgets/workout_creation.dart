@@ -10,6 +10,7 @@ import 'package:workout_app/reusable_widgets/containers.dart';
 
 import '../firebase/firestore_types.dart';
 import '../user_data.dart';
+import 'exercise.dart';
 
 class WorkoutCreationForm extends StatefulWidget {
   const WorkoutCreationForm({super.key});
@@ -33,9 +34,6 @@ class _WorkoutCreationFormState extends State<WorkoutCreationForm> {
   var _exercises = <WorkoutExerciseModel>[];
 
   String? _exerciseSearchValue;
-  bool _shouldWarnName = false;
-  bool _shouldWarnExercises = false;
-  bool _shouldNotifySuccess = false;
 
   @override
   void didChangeDependencies() {
@@ -125,14 +123,22 @@ class _WorkoutCreationFormState extends State<WorkoutCreationForm> {
 
   Future<void> _createWorkoutAsync() async {
     if (_exercises.isEmpty) {
-      _shouldWarnExercises = true;
+      context.showAlert("There are no exercises in this workout. Please add at least one exercise");
       setState(() {});
       return;
     }
 
-    var result = await _addWorkoutToFirestore(WorkoutModel(exercises: _exercises, name: _name.text));
+    var result = await _addWorkoutToFirestore(WorkoutModel(
+      exercises: _exercises,
+      name: _name.text,
+      minutes: double.parse(_duration.text),
+    ));
 
-    _shouldWarnName = !result;
+    if (!mounted) {
+      return;
+    }
+
+    context.showAlert("Creating this workout will override another one with the same name. Please choose another name");
 
     if (result) {
       // The commented lines only reset to the previous values
@@ -142,7 +148,10 @@ class _WorkoutCreationFormState extends State<WorkoutCreationForm> {
       _resetWorkoutForm();
       _resetExerciseForm();
 
-      _shouldNotifySuccess = true;
+      context.succesSnackbar("Successfully created workout!");
+    }
+    if (!mounted) {
+      return;
     }
 
     setState(() {});
@@ -166,26 +175,6 @@ class _WorkoutCreationFormState extends State<WorkoutCreationForm> {
       context.loadingSnackbar("Creating workout...");
       _createWorkoutAsync();
     }
-  }
-
-  Widget _createExercise(WorkoutExerciseModel model) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(model.name, style: Theme.of(context).text.titleSmall),
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Weight: ${model.kg} kg"),
-              Text("Reps: ${model.reps}"),
-              Text("Sets: ${model.sets}"),
-            ],
-          ),
-        ),
-      ],
-    );
   }
 
   @override
@@ -230,31 +219,10 @@ class _WorkoutCreationFormState extends State<WorkoutCreationForm> {
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: _exercises.map((e) => _createExercise(e)).toList(),
+          children: _exercises.map((e) => WorkoutExercise(model: e)).toList(),
         ),
       ],
     );
-
-    // HACK: I don't like the way this is done.
-    if (_shouldWarnName) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        context.showAlert("Creating this workout will override another one with the same name. Please choose another name");
-      });
-      _shouldWarnName = false;
-    }
-    if (_shouldWarnExercises) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        context.showAlert("There are no exercises in this workout. Please add at least one exercise");
-      });
-      _shouldWarnExercises = false;
-    }
-    if (_shouldNotifySuccess) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        context.succesSnackbar("Successfully created workout!");
-      });
-      _shouldNotifySuccess = false;
-    }
 
     return PaddedContainer(
       child: Column(

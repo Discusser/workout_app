@@ -88,3 +88,55 @@ class ExerciseCard extends StatelessWidget {
     );
   }
 }
+
+class WorkoutExercise extends StatelessWidget {
+  const WorkoutExercise({super.key, required this.model, this.style, this.secondaryStyle, bool? compact}) : compact = compact ?? false;
+
+  final WorkoutExerciseModel model;
+  final TextStyle? style;
+  final TextStyle? secondaryStyle;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    var children = <Widget>[Text(model.name, style: style ?? Theme.of(context).text.titleSmall)];
+
+    if (!compact) {
+      children.addAll([
+        Padding(
+          padding: const EdgeInsets.only(left: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Weight: ${model.kg} kg", style: secondaryStyle),
+              Text("Reps: ${model.reps}", style: secondaryStyle),
+              Text("Sets: ${model.sets}", style: secondaryStyle),
+            ],
+          ),
+        ),
+      ]);
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      );
+    } else {
+      var text = "(";
+
+      if (model.kg != 0) {
+        text += "${model.kg} kg, ";
+      }
+
+      text += "${model.sets}x${model.reps})";
+
+      children.addAll([
+        const SizedBox(width: 4.0),
+        Text(text, style: secondaryStyle),
+      ]);
+
+      return Row(
+        children: children,
+      );
+    }
+  }
+}

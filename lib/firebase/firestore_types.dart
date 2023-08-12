@@ -32,10 +32,11 @@ class WorkoutExerciseModel {
 }
 
 class WorkoutModel {
-  const WorkoutModel({required this.exercises, required this.name});
+  const WorkoutModel({required this.exercises, required this.name, required this.minutes});
 
   final List<WorkoutExerciseModel> exercises;
   final String name;
+  final double minutes;
 
   factory WorkoutModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -47,13 +48,14 @@ class WorkoutModel {
       exercises.add(WorkoutExerciseModel.fromMap(exercise));
     }
 
-    return WorkoutModel(exercises: exercises, name: data["name"]);
+    return WorkoutModel(exercises: exercises, name: data["name"], minutes: (data["minutes"] as num).toDouble());
   }
 
   Map<String, dynamic> toFirestore() {
     return {
       "exercises": exercises.map((e) => e.toFirestore()).toList(),
       "name": name,
+      "minutes": minutes,
     };
   }
 }
