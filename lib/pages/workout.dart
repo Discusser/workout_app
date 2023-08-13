@@ -2,10 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:workout_app/extensions/message_helper.dart';
+import 'package:workout_app/extensions/message_helper.dart';
 import 'package:workout_app/extensions/num_helper.dart';
 import 'package:workout_app/extensions/theme_helper.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
 import 'package:workout_app/pages/exercise.dart';
+import 'package:workout_app/pages/loading.dart';
 import 'package:workout_app/pages/loading.dart';
 import 'package:workout_app/reusable_widgets/muscle_list.dart';
 import 'package:workout_app/reusable_widgets/workout_creation.dart';
@@ -260,6 +262,35 @@ class _WorkoutPageState extends State<WorkoutPage> {
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: Future.wait([_workoutExerciseModelsFuture, _exercisesFuture, _workoutNamesFuture]),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          var workoutExercises = snapshot.data![0] as List<ExerciseModel>;
+          var exercises = snapshot.data![1] as List<String>;
+          var workoutNames = snapshot.data![2] as List<String>;
+
+          return GenericPage(
+            body: PaddedContainer(
+              child: Column(
+                children: [
+                  SectionTitle(text: _model.name),
+                  const SizedBox(height: 8.0),
+                  const Divider(),
+                  _createMiscInfo(),
+                  const Divider(),
+                  _createMusclesTargeted(workoutExercises),
+                  const Divider(),
+                  _createExerciseInfo(exercises, workoutNames),
+                ],
+              ),
+            ),
+          );
+        } else {
+          return const LoadingPage();
+        }
+      },
+    );
     return FutureBuilder(
       future: Future.wait([_workoutExerciseModelsFuture, _exercisesFuture, _workoutNamesFuture]),
       builder: (context, snapshot) {
