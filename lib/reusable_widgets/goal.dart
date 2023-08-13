@@ -71,7 +71,6 @@ class _GoalState extends State<Goal> {
     });
 
     var model = GoalModel(completed: _completed, goal: widget.controller.text);
-    debugPrint("_oldGoal: ${_oldGoal.completed} ${_oldGoal.goal}, model: ${model.completed} ${model.goal}");
     widget.onSubmitted(_oldGoal, model);
     _oldGoal = model;
   }

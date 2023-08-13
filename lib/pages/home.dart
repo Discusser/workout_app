@@ -173,7 +173,12 @@ class WorkoutListView extends StatelessWidget {
   final List<WorkoutModel> workouts;
 
   Widget _buildWorkout(BuildContext context, WorkoutModel model) {
-    var path = model.exercises[Random().nextInt(model.exercises.length)].name.asExerciseImage();
+    String path;
+    if (model.exercises.isNotEmpty) {
+      path = model.exercises[Random().nextInt(model.exercises.length)].name.asExerciseImage();
+    } else {
+      path = "Dips".asExerciseImage();
+    }
 
     return Container(
       decoration: BoxDecoration(border: Border.all(color: Colors.blueAccent), color: Theme.of(context).color.surface),
