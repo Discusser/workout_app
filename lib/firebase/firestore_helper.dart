@@ -44,10 +44,10 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
     addGoals(models, username);
   }
 
-  Future<List<String>> getWorkoutNames(String username) async {
+  Future<List<String>> getWorkoutNames(String username, [GetOptions? options]) async {
     var workouts = <String>[];
 
-    var snapshot = await colWorkouts(username).get();
+    var snapshot = await colWorkouts(username).get(options);
     for (var doc in snapshot.docs) {
       workouts.add(doc.data()["name"]);
     }
@@ -214,8 +214,8 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
     }).toList();
   }
 
-  Future<List<ExerciseModel>> getExercises(String username) async {
-    var result = await colExercises().get();
+  Future<List<ExerciseModel>> getExercises(String username, [GetOptions? options]) async {
+    var result = await colExercises().get(options);
 
     return result.docs.map((e) => ExerciseModel.fromFirestore(e, null)).toList();
   }
@@ -233,6 +233,45 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
 
     return result.where((element) => element.exercises.map((e) => e.name).contains(exercise)).map((e) => e.name).toList();
   }
+
+  Future<bool> addWorkout(WorkoutModel model, String username, [bool? replace, GetOptions? options]) async {
+    var workoutNames = await FirebaseFirestore.instance.getWorkoutNames(username, options);
+
+    if ((replace == null || !replace) && workoutNames.map((e) => e.toLowerCase()).contains(model.name.toLowerCase())) {
+      return false;
+    }
+
+    await FirebaseFirestore.instance
+        .colWorkouts(username)
+        .withConverter(fromFirestore: WorkoutModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
+        .add(model);
+    return true;
+  }
+
+  Future<void> removeWorkout(String name, String username) async {
+    var ref = FirebaseFirestore.instance
+        .colWorkouts(username)
+        .withConverter(fromFirestore: WorkoutModel.fromFirestore, toFirestore: (value, options) => value.toFirestore());
+    var result = await ref.where("name", isEqualTo: name).get();
+
+    if (result.docs.isNotEmpty) {
+      ref.doc(result.docs[0].id).delete();
+    }
+  }
+
+  // Future<void> replaceWorkout(WorkoutModel model, String username) async {
+  //   var ref = FirebaseFirestore.instance
+  //       .colWorkouts(username)
+  //       .withConverter(fromFirestore: WorkoutModel.fromFirestore, toFirestore: (value, options) => value.toFirestore());
+  //   var result = await ref.where("name", isEqualTo: model.name).get();
+
+  //   // Replace the model if it exists, else create a new document
+  //   if (result.docs.isNotEmpty) {
+  //     ref.doc(result.docs[0].id).set(model);
+  //   } else {
+  //     ref.add(model);
+  //   }
+  // }
 
   List<T> getRecords<T, U>(QuerySnapshot<T> snapshot, Comparable<U> Function(T data) key) {
     Comparable<U>? biggest;

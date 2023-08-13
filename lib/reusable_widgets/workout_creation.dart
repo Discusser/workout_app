@@ -13,41 +13,31 @@ import '../user_data.dart';
 import 'exercise.dart';
 
 class WorkoutCreationForm extends StatefulWidget {
-  const WorkoutCreationForm({super.key});
+  const WorkoutCreationForm({super.key, required this.exercises, required this.workouts});
+
+  final List<String> exercises;
+  final List<String> workouts;
 
   @override
-  State<WorkoutCreationForm> createState() => _WorkoutCreationFormState();
+  State<WorkoutCreationForm> createState() => WorkoutCreationFormState();
 }
 
-class _WorkoutCreationFormState extends State<WorkoutCreationForm> {
-  final _workoutForm = GlobalKey<FormState>();
+class WorkoutCreationFormState extends State<WorkoutCreationForm> {
+  final workoutForm = GlobalKey<FormState>();
+  final _exercisesParentForm = GlobalKey<ExerciseCreationFormState>();
   final _exercisesForm = GlobalKey<FormState>();
-  final _name = TextEditingController();
-  final _duration = TextEditingController();
-  final _weight = TextEditingController();
-  final _sets = TextEditingController();
-  final _reps = TextEditingController();
+  final name = TextEditingController();
+  final duration = TextEditingController();
 
-  late Future<List<String>> _exercisesFuture;
   late Future<String> _username;
 
-  var _exercises = <WorkoutExerciseModel>[];
-
-  String? _exerciseSearchValue;
+  var _workoutExercises = <WorkoutExerciseModel>[];
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
     _username = Provider.of<UserModel>(context).username;
-
-    _exercisesFuture = getExercises();
-  }
-
-  Future<List<String>> getExercises() async {
-    var username = await _username;
-    var result = await FirebaseFirestore.instance.getExercises(username);
-    return result.map((e) => e.name).toList();
   }
 
   String? validateNonNull(String? value) {
@@ -84,142 +74,92 @@ class _WorkoutCreationFormState extends State<WorkoutCreationForm> {
     return null;
   }
 
-  void addExercise() {
-    if (_exercisesForm.currentState!.validate()) {
-      if (_exerciseSearchValue == null || _exerciseSearchValue!.isEmpty) {
-        context.showError("Invalid exercise");
-        return;
-      }
-
-      _exercises.add(WorkoutExerciseModel(
-        kg: int.parse(_weight.text),
-        name: _exerciseSearchValue!,
-        reps: int.parse(_reps.text),
-        sets: int.parse(_sets.text),
-      ));
-
-      _exerciseSearchValue = null;
-
-      _resetExerciseForm();
-
-      setState(() {});
-    }
-  }
-
   Future<bool> _addWorkoutToFirestore(WorkoutModel model) async {
     var username = await _username;
-    var workoutNames = await FirebaseFirestore.instance.getWorkoutNames(username);
 
-    if (workoutNames.map((e) => e.toLowerCase()).contains(model.name.toLowerCase())) {
-      return false;
-    }
+    FirebaseFirestore.instance.addWorkout(model, username);
 
-    FirebaseFirestore.instance
-        .colWorkouts(username)
-        .withConverter(fromFirestore: WorkoutModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
-        .add(model);
     return true;
   }
 
   Future<void> _createWorkoutAsync() async {
-    if (_exercises.isEmpty) {
+    if (_workoutExercises.isEmpty) {
       context.showAlert("There are no exercises in this workout. Please add at least one exercise");
       setState(() {});
       return;
     }
 
-    var result = await _addWorkoutToFirestore(WorkoutModel(
-      exercises: _exercises,
-      name: _name.text,
-      minutes: double.parse(_duration.text),
+    var workoutAdded = await _addWorkoutToFirestore(WorkoutModel(
+      exercises: _workoutExercises,
+      name: name.text,
+      minutes: double.parse(duration.text),
     ));
 
     if (!mounted) {
       return;
     }
 
-    context.showAlert("Creating this workout will override another one with the same name. Please choose another name");
+    if (widget.workouts.map((e) => e.toLowerCase()).contains(name.text.toLowerCase())) {
+      context.showAlert("Creating this workout will override another one with the same name. Please choose another name");
+    }
 
-    if (result) {
+    if (workoutAdded) {
       // The commented lines only reset to the previous values
       // _workoutForm.currentState!.reset();
       // _exercisesForm.currentState!.reset();
 
       _resetWorkoutForm();
-      _resetExerciseForm();
+      _exercisesParentForm.currentState!.resetForm();
 
       context.succesSnackbar("Successfully created workout!");
-    }
-    if (!mounted) {
-      return;
     }
 
     setState(() {});
   }
 
   void _resetWorkoutForm() {
-    _name.text = "";
-    _duration.text = "";
-    _exercises = <WorkoutExerciseModel>[];
-  }
-
-  void _resetExerciseForm() {
-    _exerciseSearchValue = null;
-    _weight.text = "";
-    _sets.text = "";
-    _reps.text = "";
+    name.text = "";
+    duration.text = "";
+    _workoutExercises = <WorkoutExerciseModel>[];
   }
 
   void createWorkout() {
-    if (_workoutForm.currentState!.validate()) {
+    if (workoutForm.currentState!.validate()) {
       context.loadingSnackbar("Creating workout...");
       _createWorkoutAsync();
     }
   }
 
+  void addExercise() {
+    if (_exercisesForm.currentState!.validate()) {
+      var state = _exercisesParentForm.currentState!;
+      var exercise = state.searchValue;
+
+      if (exercise == null || exercise.isEmpty) {
+        return context.showError("Invalid exercise");
+      }
+
+      _workoutExercises.add(WorkoutExerciseModel(
+        kg: int.parse(state.weight.text),
+        name: exercise,
+        reps: int.parse(state.reps.text),
+        sets: int.parse(state.sets.text),
+      ));
+
+      state.resetForm();
+
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    var exerciseDropdownFuture = FutureBuilder(
-      future: _exercisesFuture,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          var items = snapshot.data!
-              .map((e) => DropdownMenuItem(
-                    value: e,
-                    child: Text(e),
-                  ))
-              .toList();
-          return SearchChoices<String>.single(
-            items: items,
-            value: _exerciseSearchValue,
-            hint: "Exercise Name",
-            searchHint: "Exercise Name",
-            onChanged: (value) {
-              _exerciseSearchValue = value;
-            },
-            onClear: () {
-              _exerciseSearchValue = null;
-              setState(() {}); // Call setState to remove the data displayed
-            },
-            isExpanded: true,
-          );
-        } else {
-          return DropdownButtonFormField(
-            items: const [],
-            onChanged: (value) {},
-            decoration: const InputDecoration(labelText: "Exercise Name"),
-            validator: (value) => "Exercise not specified",
-          );
-        }
-      },
-    );
-
     var exercises = Row(
       mainAxisSize: MainAxisSize.max,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: _exercises.map((e) => WorkoutExercise(model: e)).toList(),
+          children: _workoutExercises.map((e) => WorkoutExercise(model: e)).toList(),
         ),
       ],
     );
@@ -227,53 +167,20 @@ class _WorkoutCreationFormState extends State<WorkoutCreationForm> {
     return PaddedContainer(
       child: Column(
         children: [
-          Form(
-            key: _workoutForm,
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: _name,
-                  decoration: const InputDecoration(labelText: "Workout Name"),
-                  keyboardType: TextInputType.text,
-                  maxLength: 32,
-                  validator: validateNonNull,
-                ),
-                TextFormField(
-                  controller: _duration,
-                  decoration: const InputDecoration(labelText: "Average Duration (minutes)"),
-                  keyboardType: TextInputType.number,
-                  validator: validateNumber,
-                )
-              ],
-            ),
+          WorkoutMetadataCreationForm(
+            formKey: workoutForm,
+            nonNullValidator: validateNonNull,
+            numberValidator: validateNumber,
+            nameController: name,
+            durationController: duration,
           ),
           const SizedBox(height: 8.0),
           SectionTitle(text: "Add Exercises", style: Theme.of(context).text.titleLarge),
-          Form(
-            key: _exercisesForm,
-            child: Column(
-              children: [
-                exerciseDropdownFuture,
-                TextFormField(
-                  controller: _weight,
-                  decoration: const InputDecoration(labelText: "Weight (kg)"),
-                  keyboardType: TextInputType.number,
-                  validator: validateInt,
-                ),
-                TextFormField(
-                  controller: _sets,
-                  decoration: const InputDecoration(labelText: "Sets"),
-                  keyboardType: TextInputType.number,
-                  validator: validateInt,
-                ),
-                TextFormField(
-                  controller: _reps,
-                  decoration: const InputDecoration(labelText: "Reps"),
-                  keyboardType: TextInputType.number,
-                  validator: validateInt,
-                ),
-              ],
-            ),
+          ExerciseCreationForm(
+            key: _exercisesParentForm,
+            formKey: _exercisesForm,
+            intValidator: validateInt,
+            exercises: widget.exercises,
           ),
           Center(
             child: TextButton(
@@ -286,6 +193,171 @@ class _WorkoutCreationFormState extends State<WorkoutCreationForm> {
             child: TextButton(
               onPressed: createWorkout,
               child: const Text("Create workout"),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class WorkoutMetadataCreationForm extends StatefulWidget {
+  const WorkoutMetadataCreationForm({
+    super.key,
+    required this.formKey,
+    this.nonNullValidator,
+    this.numberValidator,
+    this.nameController,
+    this.durationController,
+  });
+
+  final GlobalKey<FormState> formKey;
+  final String? Function(String?)? nonNullValidator;
+  final String? Function(String?)? numberValidator;
+  final TextEditingController? nameController;
+  final TextEditingController? durationController;
+
+  @override
+  State<WorkoutMetadataCreationForm> createState() => WorkoutMetadataCreationFormState();
+}
+
+class WorkoutMetadataCreationFormState extends State<WorkoutMetadataCreationForm> {
+  late TextEditingController name;
+  late TextEditingController duration;
+
+  @override
+  void initState() {
+    super.initState();
+
+    name = widget.nameController ?? TextEditingController();
+    duration = widget.durationController ?? TextEditingController();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: widget.formKey,
+      child: Column(
+        children: [
+          TextFormField(
+            controller: name,
+            decoration: const InputDecoration(labelText: "Workout Name"),
+            keyboardType: TextInputType.text,
+            maxLength: 32,
+            validator: widget.nonNullValidator,
+          ),
+          TextFormField(
+            controller: duration,
+            decoration: const InputDecoration(labelText: "Average Duration (minutes)"),
+            keyboardType: TextInputType.number,
+            validator: widget.numberValidator,
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class ExerciseCreationForm extends StatefulWidget {
+  const ExerciseCreationForm({
+    super.key,
+    required this.formKey,
+    required this.exercises,
+    this.intValidator,
+    this.initialValue,
+    this.weightController,
+    this.setsController,
+    this.repsController,
+  });
+
+  final GlobalKey<FormState> formKey;
+  final List<String> exercises;
+  final String? Function(String? value)? intValidator;
+  final String? initialValue;
+  final TextEditingController? weightController;
+  final TextEditingController? setsController;
+  final TextEditingController? repsController;
+
+  @override
+  State<ExerciseCreationForm> createState() => ExerciseCreationFormState();
+}
+
+class ExerciseCreationFormState extends State<ExerciseCreationForm> {
+  late TextEditingController weight;
+  late TextEditingController sets;
+  late TextEditingController reps;
+
+  String? searchValue;
+
+  @override
+  void initState() {
+    super.initState();
+
+    weight = widget.weightController ?? TextEditingController();
+    sets = widget.setsController ?? TextEditingController();
+    reps = widget.repsController ?? TextEditingController();
+
+    searchValue = widget.initialValue;
+  }
+
+  void resetForm() {
+    searchValue = null;
+    weight.text = "";
+    sets.text = "";
+    reps.text = "";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var items = widget.exercises
+        .map((e) => DropdownMenuItem(
+              value: e,
+              child: Text(e),
+            ))
+        .toList();
+    var exerciseDropdown = SearchChoices<String>.single(
+      items: items,
+      value: searchValue,
+      hint: "Exercise Name",
+      searchHint: "Exercise Name",
+      onChanged: (value) {
+        searchValue = value;
+      },
+      onClear: () {
+        searchValue = null;
+        setState(() {}); // Call setState to remove the data displayed
+      },
+      isExpanded: true,
+    );
+
+    return Form(
+      key: widget.formKey,
+      child: Column(
+        children: [
+          exerciseDropdown,
+          Padding(
+            padding: const EdgeInsets.only(left: 32.0),
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: weight,
+                  decoration: const InputDecoration(labelText: "Weight (kg)"),
+                  keyboardType: TextInputType.number,
+                  validator: widget.intValidator,
+                ),
+                TextFormField(
+                  controller: sets,
+                  decoration: const InputDecoration(labelText: "Sets"),
+                  keyboardType: TextInputType.number,
+                  validator: widget.intValidator,
+                ),
+                TextFormField(
+                  controller: reps,
+                  decoration: const InputDecoration(labelText: "Reps"),
+                  keyboardType: TextInputType.number,
+                  validator: widget.intValidator,
+                ),
+              ],
             ),
           ),
         ],

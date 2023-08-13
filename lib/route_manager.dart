@@ -24,8 +24,17 @@ class RouteManager {
     return Navigator.pushNamed(context, route);
   }
 
-  static Future<Object?> clearAndPushNamed(BuildContext context, String route) {
+  static clear(BuildContext context) {
     Navigator.popUntil(context, (route) => false);
-    return Navigator.pushNamed(context, route);
+  }
+
+  static Future<Object?> clearAndPushNamed(BuildContext context, String route) {
+    clear(context);
+    return pushNamed(context, route);
+  }
+
+  static Future<Object?> clearAndPush(BuildContext context, Widget Function(BuildContext context) builder) {
+    clear(context);
+    return push(context, builder);
   }
 }
