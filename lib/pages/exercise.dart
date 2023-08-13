@@ -10,7 +10,7 @@ import 'home.dart';
 class Muscles {
   static List<String> simplifyMuscleNames(List<String> muscles, bool remove) {
     var list = muscles.map((e) => simplifyMuscleName(e, remove)).toList();
-    list.removeWhere((element) => element == "");
+    list.removeWhere((element) => element.isEmpty);
     return list;
   }
 
@@ -114,10 +114,12 @@ class _ExercisePageState extends State<ExercisePage> {
   bool _detailed = false;
 
   Widget _createMuscleList(List<String> values) {
-    values = _detailed ? values : Muscles.simplifyMuscleNames(values, !_detailed).toSet().toList();
+    var copy = List<String>.from(values);
+    copy = _detailed ? copy : Muscles.simplifyMuscleNames(copy, !_detailed).toSet().toList();
+    copy.removeWhere((element) => element.isEmpty);
     var children = <Widget>[];
 
-    for (int i = 0; i < values.length; i++) {
+    for (int i = 0; i < copy.length; i++) {
       children.add(Text(
         "${i + 1}. ${values[i]}",
         style: Theme.of(context).text.bodyLarge!.apply(fontSizeFactor: 1.2),

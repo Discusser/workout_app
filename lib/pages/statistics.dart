@@ -7,8 +7,8 @@ import 'package:workout_app/firebase/firestore_helper.dart';
 import 'package:workout_app/firebase/firestore_types.dart';
 import 'package:workout_app/pages/generic.dart';
 import 'package:workout_app/pages/home.dart';
+import 'package:workout_app/pages/loading.dart';
 import 'package:workout_app/pages/plotted_data.dart';
-import 'package:workout_app/reusable_widgets/loading.dart';
 import 'package:workout_app/reusable_widgets/scrollables.dart';
 import 'package:workout_app/route_manager.dart';
 import 'package:workout_app/theme/app_theme.dart';
@@ -99,11 +99,11 @@ class StatisticsHelper {
     return object.toFirestore().keys.map((e) => e.capitalize()).toList();
   }
 
-  void plotData(Future<List<HasFormatteableData>> future, String title) {
-    RouteManager.push(context, (context) => PlottedDataPage(data: future, title: title));
+  void plotData(List<HasFormatteableData> data, String title) {
+    RouteManager.push(context, (context) => PlottedDataPage(data: data, title: title));
   }
 
-  Widget makeTableFromFuture(String title, Future<List<HasFormatteableData>> future) {
+  Widget makeTable(String title, List<HasFormatteableData> data) {
     var sectionTitle = Stack(
       alignment: Alignment.center,
       children: [
@@ -112,62 +112,46 @@ class StatisticsHelper {
           alignment: Alignment.centerRight,
           child: IconButton(
             icon: const Icon(Icons.bar_chart),
-            onPressed: () => plotData(future, title),
+            onPressed: () => plotData(data, title),
           ),
         )
       ],
     );
 
-    return FutureBuilder(
-      future: future,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          if (snapshot.data!.isEmpty) {
-            return PaddedContainer(
-              child: Column(
-                children: [
-                  sectionTitle,
-                  const SizedBox(height: 8.0),
-                  const Center(child: Text("There are no records to display")),
-                ],
-              ),
-            );
-          }
+    if (data.isEmpty) {
+      return PaddedContainer(
+        child: Column(
+          children: [
+            sectionTitle,
+            const SizedBox(height: 8.0),
+            const Center(child: Text("There is no data to display")),
+          ],
+        ),
+      );
+    }
 
-          var children = <TableRow>[];
-          var headers = _getHeaders(snapshot.data![0]);
+    var children = <TableRow>[];
+    var headers = _getHeaders(data[0]);
 
-          _addHeader(children, headers);
+    _addHeader(children, headers);
 
-          for (var element in snapshot.data!) {
-            _addRow(children, element.toFormattedTable());
-          }
+    for (var element in data) {
+      _addRow(children, element.toFormattedTable());
+    }
 
-          return PaddedContainer(
-            child: Column(
-              children: [
-                sectionTitle,
-                const SizedBox(height: 8.0),
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height / 3),
-                  child: ScrollableTable(
-                    children: children,
-                  ),
-                ),
-              ],
+    return PaddedContainer(
+      child: Column(
+        children: [
+          sectionTitle,
+          const SizedBox(height: 8.0),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height / 3),
+            child: ScrollableTable(
+              children: children,
             ),
-          );
-        } else {
-          return PaddedContainer(
-            child: Column(
-              children: [
-                sectionTitle,
-                const LoadingFuture(),
-              ],
-            ),
-          );
-        }
-      },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -185,14 +169,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
   late Future<List<CardioSessionModel>> _cardioFuture;
   late Future<List<WeightModel>> _weightFuture;
 
-  // Widget? _dropdownValue;
-
-  // void onPressed() {
-  //   if (_dropdownValue != null) {
-  //     showDialog(context: context, builder: (context) => _dropdownValue!);
-  //   }
-  // }
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -200,6 +176,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     Provider.of<StatisticChangeModel>(context);
 
     _username = Provider.of<UserModel>(context).username;
+
     _workoutsFuture = getWorkouts();
     _cardioFuture = getCardio();
     _weightFuture = getWeight();
@@ -222,46 +199,33 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // var dropdownItems = const [
-    //   DialogDropdownItem(dialog: AddWorkoutDialog(), value: "workout_session", child: Text("Workout Session")),
-    //   DialogDropdownItem(dialog: AddCardioDialog(), value: "cardio_session", child: Text("Cardio Session")),
-    //   DialogDropdownItem(dialog: AddWeightDialog(), value: "weight", child: Text("Weight")),
-    //   DialogDropdownItem(dialog: SetGoalDialog(), value: "weight_goal", child: Text("Weight Goal")),
-    // ];
-
-    // var form = Form(
-    //   child: PaddedContainer(
-    //     child: Row(
-    //       children: [
-    //         Expanded(
-    //           child: DropdownButtonFormField<String>(
-    //             items: dropdownItems,
-    //             hint: const Text("I want to add.."),
-    //             onChanged: (value) => _dropdownValue = dropdownItems.firstWhere((element) => element.value == value).dialog,
-    //           ),
-    //         ),
-    //         IconButton(icon: const Icon(Icons.add), onPressed: onPressed)
-    //       ],
-    //     ),
-    //   ),
-    // );
-
     var helper = StatisticsHelper(context: context);
 
-    return GenericPage(
-      body: PaddedContainer(
-        child: Column(
-          children: [
-            // form,
-            // const Divider(),
-            helper.makeTableFromFuture("Workouts", _workoutsFuture),
-            const Divider(),
-            helper.makeTableFromFuture("Cardio", _cardioFuture),
-            const Divider(),
-            helper.makeTableFromFuture("Weight", _weightFuture),
-          ],
-        ),
-      ),
+    return FutureBuilder(
+      future: Future.wait([_workoutsFuture, _cardioFuture, _weightFuture]),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          var workouts = snapshot.data![0] as List<WorkoutSessionModel>;
+          var cardio = snapshot.data![1] as List<CardioSessionModel>;
+          var weight = snapshot.data![2] as List<WeightModel>;
+
+          return GenericPage(
+            body: PaddedContainer(
+              child: Column(
+                children: [
+                  helper.makeTable("Workouts", workouts),
+                  const Divider(),
+                  helper.makeTable("Cardio", cardio),
+                  const Divider(),
+                  helper.makeTable("Weight", weight),
+                ],
+              ),
+            ),
+          );
+        } else {
+          return const LoadingPage();
+        }
+      },
     );
   }
 }

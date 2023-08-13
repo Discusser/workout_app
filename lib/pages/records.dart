@@ -52,30 +52,29 @@ class _RecordsPageState extends State<RecordsPage> {
       return const SizedBox.shrink();
     }
 
-    var builder = FutureBuilder(
+    return FutureBuilder(
       future: _recordsFuture,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return StatisticsHelper(context: context).makeTableFromFuture(
-            "Current Record",
-            Future.value(snapshot.data!.isNotEmpty ? [snapshot.data![0]] : []),
+          return Column(
+            children: [
+              StatisticsHelper(context: context).makeTable(
+                "Current Record",
+                snapshot.data!.isNotEmpty ? [snapshot.data![0]] : <HasFormatteableData>[],
+              ),
+              StatisticsHelper(context: context).makeTable("Records", snapshot.data!),
+            ],
           );
         } else {
           return const SizedBox.shrink();
         }
       },
     );
-
-    return Column(
-      children: [
-        builder,
-        StatisticsHelper(context: context).makeTableFromFuture("Records", _recordsFuture),
-      ],
-    );
   }
 
   Widget _createForm() {
-    var dropdownItems = [ // TODO: add more options
+    var dropdownItems = [
+      // TODO: add more options
       QueryDropdownItem(
         query: (username) => FirebaseFirestore.instance.getWorkoutTimeRecords(username),
         value: "Workout Time",

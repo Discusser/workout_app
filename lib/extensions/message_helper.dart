@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:workout_app/extensions/theme_helper.dart';
 
+import '../reusable_widgets/containers.dart';
 import '../theme/app_theme.dart';
 
 extension ErrorHelper on BuildContext {
@@ -29,6 +30,24 @@ extension ErrorHelper on BuildContext {
               child: const Text('OK'),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void showInfo(Widget child) {
+    showDialog(
+      context: this,
+      builder: (context) {
+        return Dialog(
+          child: PaddedContainer(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [child],
+            ),
+          ),
         );
       },
     );

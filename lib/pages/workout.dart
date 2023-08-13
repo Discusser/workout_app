@@ -1,10 +1,7 @@
-import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:workout_app/extensions/num_helper.dart';
-import 'package:workout_app/extensions/string_helper.dart';
 import 'package:workout_app/extensions/theme_helper.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
 import 'package:workout_app/pages/exercise.dart';

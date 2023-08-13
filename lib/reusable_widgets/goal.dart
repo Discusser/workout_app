@@ -5,20 +5,27 @@ import '../firebase/firestore_types.dart';
 import '../theme/app_theme.dart';
 
 class Goal extends StatefulWidget {
-  Goal({super.key, required this.completed, required this.goal, goalModel, required this.onSubmitted, isFresh})
-      : goalModel = goalModel ?? GoalModel(completed: completed, goal: goal),
+  Goal({
+    super.key,
+    required this.completed,
+    required this.goal,
+    GoalModel? goalModel,
+    bool Function(GoalModel oldGoal, GoalModel goal)? onSubmitted,
+    bool? isFresh,
+  })  : goalModel = goalModel ?? GoalModel(completed: completed, goal: goal),
         controller = TextEditingController(text: goal),
         focusNode = FocusNode(),
+        onSubmitted = onSubmitted ?? ((oldGoal, goal) => true),
         isFresh = isFresh ?? false;
 
   Goal.fromModel({Key? key, required GoalModel goalModel, bool Function(GoalModel oldGoal, GoalModel goal)? onSubmitted})
       : this(
-            key: key,
-            completed: goalModel.completed,
-            goal: goalModel.goal,
-            goalModel: goalModel,
-            onSubmitted: onSubmitted ?? (text, goal) => true
-  );
+          key: key,
+          completed: goalModel.completed,
+          goal: goalModel.goal,
+          goalModel: goalModel,
+          onSubmitted: onSubmitted,
+        );
 
   final GoalModel goalModel;
   final bool completed;

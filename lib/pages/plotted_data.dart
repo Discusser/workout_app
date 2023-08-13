@@ -6,7 +6,6 @@ import 'package:workout_app/extensions/string_helper.dart';
 import 'package:workout_app/pages/statistics.dart';
 
 import '../reusable_widgets/containers.dart';
-import '../reusable_widgets/loading.dart';
 import 'generic.dart';
 
 class XYPair {
@@ -16,29 +15,11 @@ class XYPair {
   final double y;
 }
 
-class PlottedDataPage extends StatefulWidget {
+class PlottedDataPage extends StatelessWidget {
   const PlottedDataPage({super.key, required this.data, required this.title});
 
-  final Future<List<HasFormatteableData>> data;
+  final List<HasFormatteableData> data;
   final String title;
-
-  @override
-  State<PlottedDataPage> createState() => _PlottedDataPageState();
-}
-
-class _PlottedDataPageState extends State<PlottedDataPage> {
-  late TrackballBehavior _trackballBehavior;
-  late ZoomPanBehavior _zoomPanBehavior;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _trackballBehavior = TrackballBehavior(enable: true, tooltipDisplayMode: TrackballDisplayMode.groupAllPoints);
-    _zoomPanBehavior = ZoomPanBehavior(
-      enablePanning: true,
-    );
-  }
 
   List<XYPair> randomData(int length) {
     var chartData = <XYPair>[];
@@ -81,8 +62,8 @@ class _PlottedDataPageState extends State<PlottedDataPage> {
         title: AxisTitle(text: data[0].yAxisName.capitalize()),
         labelFormat: data[0].yAxisFormat,
       ),
-      trackballBehavior: _trackballBehavior,
-      zoomPanBehavior: _zoomPanBehavior,
+      trackballBehavior: TrackballBehavior(enable: true, tooltipDisplayMode: TrackballDisplayMode.groupAllPoints),
+      zoomPanBehavior: ZoomPanBehavior(enablePanning: true),
       series: <ChartSeries>[
         LineSeries<XYPair, DateTime>(
           dataSource: dataSource,
@@ -96,24 +77,13 @@ class _PlottedDataPageState extends State<PlottedDataPage> {
 
   @override
   Widget build(BuildContext context) {
-    var chart = FutureBuilder(
-      future: widget.data,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return createChart(snapshot.data!, widget.title);
-        } else {
-          return const LoadingFuture();
-        }
-      },
-    );
-
     return GenericPage(
       scrollable: false,
       body: PaddedContainer(
         child: Column(
           children: [
             Expanded(
-              child: chart,
+              child: createChart(data, title),
             ),
           ],
         ),

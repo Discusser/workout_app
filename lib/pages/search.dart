@@ -4,9 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
 import 'package:workout_app/pages/exercise.dart';
 import 'package:workout_app/pages/generic.dart';
+import 'package:workout_app/pages/loading.dart';
 import 'package:workout_app/reusable_widgets/containers.dart';
 import 'package:workout_app/reusable_widgets/exercise.dart';
-import 'package:workout_app/reusable_widgets/loading.dart';
 
 import '../firebase/firestore_types.dart';
 import '../user_data.dart';
@@ -83,22 +83,20 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    var futureBuilder = FutureBuilder(
+    return FutureBuilder(
       future: _itemsFuture,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return _createPage(snapshot.data!);
+          return GenericPage(
+            scrollable: false,
+            body: PaddedContainer(
+              child: _createPage(snapshot.data!),
+            ),
+          );
         } else {
-          return const LoadingFuture();
+          return const LoadingPage();
         }
       },
-    );
-
-    return GenericPage(
-      scrollable: false,
-      body: PaddedContainer(
-        child: futureBuilder,
-      ),
     );
   }
 }
