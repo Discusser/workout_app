@@ -27,7 +27,7 @@ class _AddWeightDialogState extends State<AddWeightDialog> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _username = Provider.of<UserModel>(context).username;
+    _username = Provider.of<UserModel>(context).id;
   }
 
   String? validateWeight(String? value) {

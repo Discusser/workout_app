@@ -37,7 +37,7 @@ class _AddDataPageState extends State<AddDataPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _username = Provider.of<UserModel>(context).username;
+    _username = Provider.of<UserModel>(context).id;
 
     _exercisesFuture = getExercises();
     _workoutsFuture = getWorkouts();

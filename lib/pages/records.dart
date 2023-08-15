@@ -39,7 +39,7 @@ class _RecordsPageState extends State<RecordsPage> {
 
     Provider.of<StatisticChangeModel>(context);
 
-    _username = Provider.of<UserModel>(context).username;
+    _username = Provider.of<UserModel>(context).id;
 
     _exercisesFuture = getExercises();
   }

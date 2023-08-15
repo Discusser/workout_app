@@ -24,7 +24,7 @@ class _SetGoalDialogState extends State<SetGoalDialog> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _username = Provider.of<UserModel>(context).username;
+    _username = Provider.of<UserModel>(context).id;
   }
 
   String? validateWeight(String? value) {

@@ -30,7 +30,7 @@ class _SearchPageState extends State<SearchPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _username = Provider.of<UserModel>(context).username;
+    _username = Provider.of<UserModel>(context).id;
 
     _itemsFuture = getExercises();
   }

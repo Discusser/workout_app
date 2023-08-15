@@ -268,7 +268,7 @@ class _GoalsListViewState extends State<GoalsListView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _username = Provider.of<UserModel>(context).username;
+    _username = Provider.of<UserModel>(context).id;
     // _goalsFuture = getGoals();
   }
 
@@ -416,7 +416,7 @@ class _WorkoutSessionState extends State<WorkoutSession> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _username = Provider.of<UserModel>(context).username;
+    _username = Provider.of<UserModel>(context).id;
   }
 
   String get elapsedTime {
@@ -658,7 +658,7 @@ class _HomePageState extends State<HomePage> {
     Provider.of<HomePageNotifier>(context);
     Provider.of<StatisticChangeModel>(context);
 
-    _username = Provider.of<UserModel>(context).username;
+    _username = Provider.of<UserModel>(context).id;
 
     _goalsFuture = getGoals();
     _workoutsFuture = getWorkouts();

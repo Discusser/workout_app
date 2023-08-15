@@ -178,7 +178,7 @@ extension FirestoreDocumentHelper on FirebaseFirestore {
 
   Future<double?> getWeightGoal(String username) async {
     var result = await colStats(username).get();
-    return result.data()?["weight_goal"];
+    return ((result.data()?["weight_goal"] ?? 0) as num).toDouble();
   }
 
   Future<List<UserWorkoutSessionStatModel>> getWorkoutTimeRecords(String username) async {

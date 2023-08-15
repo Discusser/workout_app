@@ -179,7 +179,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
     Provider.of<StatisticChangeModel>(context);
 
-    _username = Provider.of<UserModel>(context).username;
+    _username = Provider.of<UserModel>(context).id;
 
     _workoutsFuture = getWorkouts();
     _cardioFuture = getCardio();

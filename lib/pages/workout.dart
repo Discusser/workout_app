@@ -56,7 +56,7 @@ class _WorkoutPageState extends State<WorkoutPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _username = Provider.of<UserModel>(context).username;
+    _username = Provider.of<UserModel>(context).id;
 
     calculateFutures();
 

@@ -28,7 +28,7 @@ class _AddCardioDialogState extends State<AddCardioDialog> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _username = Provider.of<UserModel>(context).username;
+    _username = Provider.of<UserModel>(context).id;
   }
 
   String? validateKilometers(String? value) {
