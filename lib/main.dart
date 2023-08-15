@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workout_app/pages/settings.dart';
+import 'package:workout_app/reusable_widgets/dialogs/start_session_dialog.dart';
 import 'package:workout_app/reusable_widgets/form_dialog.dart';
 import 'package:workout_app/route_manager.dart';
 import 'package:workout_app/user_data.dart';
@@ -30,6 +31,7 @@ void main() async {
 
   runApp(MultiProvider(
     providers: [
+      ChangeNotifierProvider(create: (context) => HomePageNotifier()),
       ChangeNotifierProvider(create: (context) => StatisticChangeModel()),
       ChangeNotifierProvider(create: (context) => userModel),
       ChangeNotifierProvider(create: (context) => SettingsModel(preferences: prefManager.preferences)),

@@ -9,7 +9,6 @@ import 'package:workout_app/reusable_widgets/containers.dart';
 
 import '../reusable_widgets/dialogs/add_cardio_dialog.dart';
 import '../reusable_widgets/dialogs/add_weight_dialog.dart';
-import '../reusable_widgets/dialogs/add_workout_dialog.dart';
 import '../reusable_widgets/dialogs/set_goal_dialog.dart';
 import '../reusable_widgets/workout_creation.dart';
 import '../user_data.dart';
@@ -64,7 +63,6 @@ class _AddDataPageState extends State<AddDataPage> {
   @override
   Widget build(BuildContext context) {
     var dropdownItems = const [
-      DialogDropdownItem(dialog: AddWorkoutDialog(), value: "workout_session", child: Text("Workout Session")),
       DialogDropdownItem(dialog: AddCardioDialog(), value: "cardio_session", child: Text("Cardio Session")),
       DialogDropdownItem(dialog: AddWeightDialog(), value: "weight", child: Text("Weight")),
       DialogDropdownItem(dialog: SetGoalDialog(), value: "weight_goal", child: Text("Weight Goal")),

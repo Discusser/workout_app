@@ -34,6 +34,10 @@ class CustomBottomNavigationBar extends StatelessWidget {
           onPressed: () => RouteManager.pushNamed(context, '/statistics'),
           icon: Icon(Icons.bar_chart, color: color),
         ),
+        IconButton(
+          onPressed: () => RouteManager.pushNamed(context, '/history'),
+          icon: Icon(Icons.history, color: color),
+        ),
       ]),
     );
   }

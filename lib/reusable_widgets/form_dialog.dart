@@ -8,15 +8,29 @@ class StatisticChangeModel with ChangeNotifier {
   }
 }
 
-class FormDialog extends StatelessWidget {
-  const FormDialog({super.key, required this.title, required this.form, this.onSubmit});
+class FormDialog extends StatefulWidget {
+  const FormDialog({super.key, required this.title, required this.form, this.onSubmit, this.onSubmitAsync, this.buttonText});
 
   final String title;
   final Widget form;
   final bool Function()? onSubmit;
+  final Future<bool> Function()? onSubmitAsync;
+  final String? buttonText;
 
   static List<Widget> formatFormChildren(List<Widget> children) {
     return children.map((e) => Container(padding: const EdgeInsets.symmetric(vertical: 8.0), child: e)).toList();
+  }
+
+  @override
+  State<FormDialog> createState() => _FormDialogState();
+}
+
+class _FormDialogState extends State<FormDialog> {
+  Future<void> onPressed() async {
+    if ((widget.onSubmitAsync == null || await widget.onSubmitAsync!()) && (widget.onSubmit == null || widget.onSubmit!())) {
+      if (!mounted) return;
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -27,16 +41,12 @@ class FormDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(title),
+            Text(widget.title),
             const SizedBox(height: 8.0),
-            form,
+            widget.form,
             ElevatedButton(
-              onPressed: () {
-                if (onSubmit!()) {
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text("Submit"),
+              onPressed: onPressed,
+              child: Text(widget.buttonText ?? "Submit"),
             ),
           ],
         ),

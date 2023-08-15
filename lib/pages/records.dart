@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:search_choices/search_choices.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
+import 'package:workout_app/firebase/firestore_types.dart';
 import 'package:workout_app/pages/generic.dart';
+import 'package:workout_app/pages/loading.dart';
 import 'package:workout_app/pages/statistics.dart';
 import 'package:workout_app/reusable_widgets/containers.dart';
 
@@ -26,6 +28,7 @@ class RecordsPage extends StatefulWidget {
 class _RecordsPageState extends State<RecordsPage> {
   late Future<String> _username;
   late Future<List<HasFormatteableData>> _recordsFuture;
+  late Future<List<ExerciseModel>> _exercisesFuture;
 
   Future<List<HasFormatteableData>> Function(String)? _dropdownValue;
   String? _value;
@@ -37,6 +40,13 @@ class _RecordsPageState extends State<RecordsPage> {
     Provider.of<StatisticChangeModel>(context);
 
     _username = Provider.of<UserModel>(context).username;
+
+    _exercisesFuture = getExercises();
+  }
+
+  Future<List<ExerciseModel>> getExercises() async {
+    var username = await _username;
+    return FirebaseFirestore.instance.getExercises(username);
   }
 
   void onPressed() async {
@@ -72,9 +82,8 @@ class _RecordsPageState extends State<RecordsPage> {
     );
   }
 
-  Widget _createForm() {
+  Widget _createForm(List<ExerciseModel> exercises) {
     var dropdownItems = [
-      // TODO: add more options
       QueryDropdownItem(
         query: (username) => FirebaseFirestore.instance.getWorkoutTimeRecords(username),
         value: "Workout Time",
@@ -91,6 +100,16 @@ class _RecordsPageState extends State<RecordsPage> {
         child: const Text("Cardio Time"),
       ),
     ];
+
+    for (var exercise in exercises) {
+      dropdownItems.add(
+        QueryDropdownItem(
+          query: (username) => FirebaseFirestore.instance.getExerciseRecords(exercise.name, username),
+          value: "${exercise.name} PR",
+          child: Text("${exercise.name} PR"),
+        ),
+      );
+    }
 
     return Form(
       child: PaddedContainer(
@@ -123,15 +142,24 @@ class _RecordsPageState extends State<RecordsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return GenericPage(
-      body: PaddedContainer(
-        child: Column(
-          children: [
-            _createForm(),
-            _createRecordView(),
-          ],
-        ),
-      ),
+    return FutureBuilder(
+      future: _exercisesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return GenericPage(
+            body: PaddedContainer(
+              child: Column(
+                children: [
+                  _createForm(snapshot.data!),
+                  _createRecordView(),
+                ],
+              ),
+            ),
+          );
+        } else {
+          return const LoadingPage();
+        }
+      },
     );
   }
 }

@@ -24,7 +24,7 @@ abstract class HasFormatteableData {
   String yAxisName;
   String yAxisFormat;
 
-  Map<String, dynamic> toFirestore();
+  Map<String, dynamic> toMap();
   List<String> toFormattedTable();
 }
 
@@ -96,7 +96,7 @@ class StatisticsHelper {
   }
 
   List<String> _getHeaders(HasFormatteableData object) {
-    return object.toFirestore().keys.map((e) => e.capitalize()).toList();
+    return object.toMap().keys.map((e) => e.capitalize()).toList();
   }
 
   void plotData(List<HasFormatteableData> data, String title) {
@@ -112,7 +112,11 @@ class StatisticsHelper {
           alignment: Alignment.centerRight,
           child: IconButton(
             icon: const Icon(Icons.bar_chart),
-            onPressed: () => plotData(data, title),
+            onPressed: () {
+              if (data.isNotEmpty) {
+                plotData(data, title);
+              }
+            },
           ),
         )
       ],
@@ -165,7 +169,7 @@ class StatisticsPage extends StatefulWidget {
 
 class _StatisticsPageState extends State<StatisticsPage> {
   late Future<String> _username;
-  late Future<List<WorkoutSessionModel>> _workoutsFuture;
+  late Future<List<UserWorkoutSessionStatModel>> _workoutsFuture;
   late Future<List<CardioSessionModel>> _cardioFuture;
   late Future<List<WeightModel>> _weightFuture;
 
@@ -182,7 +186,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     _weightFuture = getWeight();
   }
 
-  Future<List<WorkoutSessionModel>> getWorkouts() async {
+  Future<List<UserWorkoutSessionStatModel>> getWorkouts() async {
     var username = await _username;
     return FirebaseFirestore.instance.getWorkouts(username);
   }
@@ -205,7 +209,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
       future: Future.wait([_workoutsFuture, _cardioFuture, _weightFuture]),
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          var workouts = snapshot.data![0] as List<WorkoutSessionModel>;
+          var workouts = snapshot.data![0] as List<UserWorkoutSessionStatModel>;
           var cardio = snapshot.data![1] as List<CardioSessionModel>;
           var weight = snapshot.data![2] as List<WeightModel>;
 

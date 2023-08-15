@@ -2,6 +2,186 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:workout_app/main.dart';
 import 'package:workout_app/pages/statistics.dart';
 
+class WorkoutSessionSetStatModel extends HasFormatteableData {
+  WorkoutSessionSetStatModel({required this.date, required this.set, xAxisName, yAxisName, yAxisFormat})
+      : super(
+          xAxisName: xAxisName ?? "date",
+          yAxisName: yAxisName ?? "kg",
+          yAxisFormat: yAxisFormat ?? "{value} kg",
+        );
+
+  final DateTime date;
+  final WorkoutSessionSetModel set;
+
+  @override
+  List<String> toFormattedTable() {
+    return [
+      "${set.reps} reps",
+      "${set.kg} kg",
+      MyApp.dateFormat.format(date),
+    ];
+  }
+
+  @override
+  Map<String, dynamic> toMap() {
+    return {
+      "reps": set.reps,
+      "kg": set.kg,
+      "date": date,
+    };
+  }
+}
+
+class WorkoutSessionSetModel {
+  const WorkoutSessionSetModel({required this.kg, required this.reps});
+
+  final int kg;
+  final int reps;
+
+  factory WorkoutSessionSetModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
+    var data = snapshot.data()!;
+
+    return WorkoutSessionSetModel.fromMap(data);
+  }
+
+  factory WorkoutSessionSetModel.fromMap(Map<String, dynamic> data) {
+    return WorkoutSessionSetModel(kg: data["kg"], reps: data["reps"]);
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      "kg": kg,
+      "reps": reps,
+    };
+  }
+}
+
+class WorkoutSessionExerciseModel {
+  WorkoutSessionExerciseModel({required this.name, required this.sets});
+
+  final String name;
+  List<WorkoutSessionSetModel> sets;
+
+  factory WorkoutSessionExerciseModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
+    var data = snapshot.data()!;
+
+    return WorkoutSessionExerciseModel.fromMap(data);
+  }
+
+  factory WorkoutSessionExerciseModel.fromMap(Map<String, dynamic> data) {
+    var sets = (data["sets"] as List<dynamic>).map((e) => WorkoutSessionSetModel.fromMap(e)).toList();
+
+    return WorkoutSessionExerciseModel(name: data["name"], sets: sets);
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      "name": name,
+      "sets": sets.map((e) => e.toFirestore()).toList(),
+    };
+  }
+}
+
+class UserWorkoutSessionStatModel extends HasFormatteableData {
+  UserWorkoutSessionStatModel({required this.session, xAxisName, yAxisName, yAxisFormat})
+      : super(
+          xAxisName: xAxisName ?? "date",
+          yAxisName: yAxisName ?? "minutes",
+          yAxisFormat: yAxisFormat ?? "{value} mins",
+        );
+
+  final UserWorkoutSessionModel session;
+
+  factory UserWorkoutSessionStatModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
+    var data = snapshot.data()!;
+
+    return UserWorkoutSessionStatModel(session: UserWorkoutSessionModel.fromMap(data["model"]));
+  }
+
+  @override
+  Map<String, dynamic> toMap() {
+    return {
+      "date": session.timeStart.toDate(),
+      "minutes": session.minutes,
+      "name": session.name,
+    };
+  }
+
+  @override
+  List<String> toFormattedTable() {
+    return [
+      session.name,
+      "${session.minutes.toStringAsFixed(0)} minutes",
+      MyApp.dateFormat.format(session.timeStart.toDate()),
+    ];
+  }
+}
+
+class UserWorkoutSessionModel {
+  const UserWorkoutSessionModel({
+    required this.active,
+    required this.name,
+    required this.exercises,
+    required this.timeStart,
+    this.timeEnd,
+  });
+
+  final bool active;
+  final String name;
+  final List<WorkoutSessionExerciseModel> exercises;
+  final Timestamp timeStart;
+  final Timestamp? timeEnd;
+
+  int get minutes {
+    return (timeEnd == null ? (active ? Timestamp.now().toDate() : timeStart.toDate()) : timeEnd!.toDate())
+        .difference(timeStart.toDate())
+        .inMinutes;
+  }
+
+  factory UserWorkoutSessionModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
+    var data = snapshot.data()!;
+
+    return UserWorkoutSessionModel.fromMap(data);
+  }
+
+  factory UserWorkoutSessionModel.fromMap(Map<String, dynamic> data) {
+    var exercises = <WorkoutSessionExerciseModel>[];
+    for (var exercise in data["exercises"]) {
+      exercises.add(WorkoutSessionExerciseModel.fromMap(exercise));
+    }
+
+    return UserWorkoutSessionModel(
+      active: data["active"],
+      name: data["name"],
+      exercises: exercises,
+      timeStart: data["time_start"],
+      timeEnd: data["time_end"],
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      "active": active,
+      "name": name,
+      "exercises": exercises.map((e) => e.toFirestore()).toList(),
+      "time_start": timeStart,
+      "time_end": timeEnd,
+    };
+  }
+}
+
 class WorkoutExerciseModel {
   const WorkoutExerciseModel({required this.kg, required this.name, required this.reps, required this.sets});
 
@@ -18,7 +198,12 @@ class WorkoutExerciseModel {
   }
 
   factory WorkoutExerciseModel.fromMap(Map<String, dynamic> data) {
-    return WorkoutExerciseModel(kg: data["kg"], name: data["name"], reps: data["reps"], sets: data["sets"]);
+    return WorkoutExerciseModel(
+      kg: data["kg"],
+      name: data["name"],
+      reps: data["reps"],
+      sets: data["sets"],
+    );
   }
 
   Map<String, dynamic> toFirestore() {
@@ -42,8 +227,11 @@ class WorkoutModel {
     DocumentSnapshot<Map<String, dynamic>> snapshot,
     SnapshotOptions? options,
   ) {
+    return WorkoutModel.fromMap(snapshot.data()!);
+  }
+
+  factory WorkoutModel.fromMap(Map<String, dynamic> data) {
     var exercises = <WorkoutExerciseModel>[];
-    var data = snapshot.data()!;
     for (var exercise in data["exercises"]) {
       exercises.add(WorkoutExerciseModel.fromMap(exercise));
     }
@@ -126,7 +314,7 @@ class WeightModel extends HasFormatteableData {
   }
 
   @override
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toMap() {
     return {
       "weight": weight,
       "date": date,
@@ -167,7 +355,7 @@ class CardioSessionModel extends HasFormatteableData {
   }
 
   @override
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toMap() {
     return {
       "kilometers": kilometers,
       "minutes": minutes,
@@ -185,6 +373,7 @@ class CardioSessionModel extends HasFormatteableData {
   }
 }
 
+@Deprecated("This will be replaced by the workout session manually performed by the user")
 class WorkoutSessionModel extends HasFormatteableData {
   WorkoutSessionModel({required this.date, required this.minutes, required this.name, xAxisName, yAxisName, yAxisFormat})
       : super(
@@ -210,7 +399,7 @@ class WorkoutSessionModel extends HasFormatteableData {
   }
 
   @override
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toMap() {
     return {
       "name": name,
       "minutes": minutes,

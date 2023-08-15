@@ -7,6 +7,7 @@ import 'package:workout_app/extensions/theme_helper.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
 import 'package:workout_app/pages/home.dart';
 import 'package:workout_app/reusable_widgets/containers.dart';
+import 'package:workout_app/reusable_widgets/dialogs/start_session_dialog.dart';
 
 import '../firebase/firestore_types.dart';
 import '../user_data.dart';
@@ -113,6 +114,8 @@ class WorkoutCreationFormState extends State<WorkoutCreationForm> {
 
       context.succesSnackbar("Successfully created workout!");
     }
+
+    Provider.of<HomePageNotifier>(context, listen: false).notify();
 
     setState(() {});
   }

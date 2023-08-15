@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:workout_app/pages/history.dart';
 import 'package:workout_app/pages/home.dart';
 import 'package:workout_app/pages/records.dart';
 import 'package:workout_app/pages/search.dart';
@@ -14,6 +15,7 @@ class RouteManager {
     '/records': (context) => const RecordsPage(),
     '/search': (context) => const SearchPage(),
     '/workouts': (context) => const AddDataPage(),
+    '/history': (context) => const HistoryPage(),
   };
 
   static Future<Object?> push(BuildContext context, Widget Function(BuildContext context) builder) {

@@ -9,11 +9,11 @@ import 'package:workout_app/pages/exercise.dart';
 import 'package:workout_app/pages/loading.dart';
 import 'package:workout_app/reusable_widgets/muscle_list.dart';
 import 'package:workout_app/reusable_widgets/workout_creation.dart';
-import 'package:workout_app/route_manager.dart';
 import 'package:workout_app/user_data.dart';
 
 import '../firebase/firestore_types.dart';
 import '../reusable_widgets/containers.dart';
+import '../reusable_widgets/dialogs/start_session_dialog.dart';
 import 'generic.dart';
 import 'home.dart';
 
@@ -33,16 +33,21 @@ class _WorkoutPageState extends State<WorkoutPage> {
   late Future<List<String>> _exercisesFuture;
   late Future<List<String>> _workoutNamesFuture;
 
-  final _workoutKey = GlobalKey<WorkoutMetadataCreationFormState>();
-  final _workoutFormKey = GlobalKey<FormState>();
-  final _keys = <GlobalKey<ExerciseCreationFormState>>[];
-  final _formKeys = <GlobalKey<FormState>>[];
+  late GlobalKey<WorkoutMetadataCreationFormState> _workoutKey;
+  late GlobalKey<FormState> _workoutFormKey;
+  late List<GlobalKey<ExerciseCreationFormState>> _keys;
+  late List<GlobalKey<FormState>> _formKeys;
 
   String _oldWorkoutName = "";
 
   @override
   void initState() {
     super.initState();
+
+    _workoutKey = GlobalKey<WorkoutMetadataCreationFormState>();
+    _workoutFormKey = GlobalKey<FormState>();
+    _keys = <GlobalKey<ExerciseCreationFormState>>[];
+    _formKeys = <GlobalKey<FormState>>[];
 
     _model = widget.model;
   }
@@ -255,7 +260,11 @@ class _WorkoutPageState extends State<WorkoutPage> {
       return;
     }
 
-    RouteManager.clearAndPush(context, (context) => WorkoutPage(model: _model));
+    context.succesSnackbar("Saved changes to workout!");
+
+    Provider.of<HomePageNotifier>(context, listen: false).notify();
+
+    // RouteManager.clearAndPush(context, (context) => WorkoutPage(model: _model));
   }
 
   @override

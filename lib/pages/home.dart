@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,6 +15,9 @@ import 'package:workout_app/route_manager.dart';
 
 import '../firebase/firestore_types.dart';
 import '../reusable_widgets/containers.dart';
+import '../reusable_widgets/dialogs/add_set_dialog.dart';
+import '../reusable_widgets/dialogs/start_session_dialog.dart';
+import '../reusable_widgets/form_dialog.dart';
 import '../reusable_widgets/goal.dart';
 import '../reusable_widgets/scrollables.dart';
 import '../reusable_widgets/texts.dart';
@@ -98,16 +102,22 @@ class WeekSummary extends StatelessWidget {
     {
       // Weight
       var difference = (after.weightAverageWeight - before.weightAverageWeight) / before.weightAverageWeight * 100;
-      var maxDistance = Provider.of<SettingsModel>(context).preferences.getDouble("max_weight_tolerance")!;
-      var weightCondition = after.weightAverageWeight < weightGoal;
-      var weightColor = color(weightCondition ? difference : -difference, difference > 0 ? "+" : "-");
-      children.add(_constructRow(
-        StatisticText(
-          text: "${validate(after.weightAverageWeight, 1)} kg",
-          progress: ProgressColor.progressive(weightColor, after.weightAverageWeight, weightGoal, maxDistance),
-          value: percent(difference.abs()),
-        ),
-      ));
+      if (weightGoal != 0.0) {
+        var maxDistance = Provider.of<SettingsModel>(context).preferences.getDouble("max_weight_tolerance")!;
+        var weightCondition = after.weightAverageWeight < weightGoal;
+        var weightColor = color(weightCondition ? difference : -difference, difference > 0 ? "+" : "-");
+        children.add(_constructRow(
+          StatisticText(
+            text: "${validate(after.weightAverageWeight, 1)} kg",
+            progress: ProgressColor.progressive(weightColor, after.weightAverageWeight, weightGoal, maxDistance),
+            value: percent(difference.abs()),
+          ),
+        ));
+      } else {
+        children.add(_constructRow(
+          StatisticText(text: "${validate(after.weightAverageWeight, 1)} kg"),
+        ));
+      }
     }
     {
       // Workouts
@@ -208,21 +218,26 @@ class WorkoutListView extends StatelessWidget {
     var children = workouts.map((e) => _buildWorkout(context, e)).toList();
 
     return PaddedContainer(
-        child: Column(
-      children: [
-        const SectionTitle(text: "Your Workouts"),
-        SizedBox(
-          height: MediaQuery.of(context).size.height / 4,
-          child: ScrollableListView(
-            scrollDirection: Axis.horizontal,
-            children: children,
+      child: Column(
+        children: [
+          const SectionTitle(text: "Your Workouts"),
+          SizedBox(
+            height: MediaQuery.of(context).size.height / 4,
+            child: ScrollableListView(
+              scrollDirection: Axis.horizontal,
+              children: children,
+            ),
           ),
-        ),
-        const Divider(
-          thickness: 2,
-        )
-      ],
-    ));
+          TextButton(
+            child: const Text("Start session"),
+            onPressed: () => showDialog(context: context, builder: (context) => const StartSessionDialog()),
+          ),
+          const Divider(
+            thickness: 2,
+          )
+        ],
+      ),
+    );
   }
 }
 
@@ -315,30 +330,6 @@ class _GoalsListViewState extends State<GoalsListView> {
     return false;
   }
 
-  // TODO: do something if there are no goals
-  // perhaps:
-  // fetch from DB, wait X seconds ---> response ---> return response
-  //      |                                                 ^
-  //      |                                                 |
-  //      v                                                 |
-  //   no response ---> create document doc(username) for next time
-  // Future<List<Goal>> getGoals() async {
-  //   if (!_shouldFetchGoals) {
-  //     return _goals; // Return local version of goals
-  //   }
-
-  //   var username = await _username;
-  //   var goals = <Goal>[];
-
-  //   debugPrint("Getting goals for $username from Firestore");
-  //   goals = await FirebaseFirestore.instance.getGoals(username, onSubmitted: onSubmitted);
-
-  //   _goals = goals; // Cache goals from firestore
-  //   _shouldFetchGoals = false;
-
-  //   return goals;
-  // }
-
   void _dismissGoalAsync(Goal goal) async {
     // Remove entry from firebase
     var username = await _username;
@@ -389,6 +380,262 @@ class _GoalsListViewState extends State<GoalsListView> {
   }
 }
 
+class WorkoutSession extends StatefulWidget {
+  const WorkoutSession({super.key, required this.session, required this.workout});
+
+  final UserWorkoutSessionModel session;
+  final WorkoutModel workout;
+
+  @override
+  State<WorkoutSession> createState() => _WorkoutSessionState();
+}
+
+class _WorkoutSessionState extends State<WorkoutSession> {
+  // final _exercises = <WorkoutSessionExerciseModel>[
+  //   WorkoutSessionExerciseModel(name: "Leg Extensions", sets: [
+  //     const WorkoutSessionSetModel(kg: 150, reps: 12),
+  //     const WorkoutSessionSetModel(kg: 145, reps: 11),
+  //   ]),
+  // ];
+
+  var _exercises = <WorkoutSessionExerciseModel>[];
+
+  late Future<String> _username;
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _exercises = widget.session.exercises;
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) => setState(() {}));
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    _username = Provider.of<UserModel>(context).username;
+  }
+
+  String get elapsedTime {
+    String format(int n) => n.remainder(60).toString().padLeft(2, "0");
+
+    var elapsedTime = Timestamp.now().toDate().difference(widget.session.timeStart.toDate());
+    var hours = format(elapsedTime.inHours);
+    var minutes = format(elapsedTime.inMinutes);
+    var seconds = format(elapsedTime.inSeconds);
+
+    return "$hours:$minutes:$seconds";
+  }
+
+  int get sets {
+    return _exercises.fold(0, (previousValue, element) => previousValue + element.sets.length);
+  }
+
+  String? get nextExercise {
+    var currentSets = _exercises.fold(0, (previousValue, element) => previousValue + element.sets.length);
+    var setsCounted = 0;
+
+    for (var exercise in widget.workout.exercises) {
+      setsCounted += exercise.sets;
+
+      if (setsCounted > currentSets) {
+        return exercise.name;
+      }
+    }
+
+    return null;
+  }
+
+  Widget _leftAlignedColumn(List<Widget> children) {
+    return Row(
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        )
+      ],
+    );
+  }
+
+  Widget _createExercisesInfo() {
+    var children = <Widget>[];
+
+    for (var exercise in _exercises) {
+      children.add(Text(exercise.name, style: Theme.of(context).text.bodyLarge));
+
+      var sets = <Widget>[];
+      for (var set in exercise.sets) {
+        var text = "${set.reps} reps";
+
+        if (set.kg != 0) {
+          text += " (${set.kg} kg)";
+        }
+
+        sets.add(Text(text));
+      }
+
+      children.add(
+        Padding(
+          padding: const EdgeInsets.only(left: 8.0),
+          child: _leftAlignedColumn(sets),
+        ),
+      );
+    }
+
+    return _leftAlignedColumn(children);
+  }
+
+  Future<bool> onSubmit(GlobalKey<FormState> key, String reps, String weight) async {
+    if (key.currentState!.validate()) {
+      var next = nextExercise;
+
+      if (next == null) {
+        return false;
+      }
+
+      // If the next exercise is a new one
+      if (_exercises.isEmpty || next != _exercises.last.name) {
+        _exercises.add(WorkoutSessionExerciseModel(name: next, sets: []));
+      }
+
+      if (next == _exercises.last.name) {
+        _exercises.last.sets.add(WorkoutSessionSetModel(kg: int.parse(weight), reps: int.parse(reps)));
+      }
+
+      // Update firestore
+      var username = await _username;
+      var updated = await FirebaseFirestore.instance.updateWorkoutSession(_exercises, username);
+
+      if (!mounted) {
+        return false;
+      }
+
+      if (!updated) {
+        context.showAlert("Could not add the set because there is no active session");
+        return false;
+      } else {
+        context.succesSnackbar("Added \"$next\" set");
+      }
+
+      // If all sets have been completed
+      if (sets == widget.workout.exercises.fold(0, (previousValue, element) => previousValue + element.sets)) {
+        var timeEnd = await FirebaseFirestore.instance.endWorkoutSession(username);
+
+        if (!mounted) {
+          return false;
+        }
+
+        Provider.of<HomePageNotifier>(context, listen: false).notify();
+
+        if (timeEnd == null) {
+          context.showAlert("Could not end the workout session because there is no active session");
+        } else {
+          await FirebaseFirestore.instance.addWorkoutStat(
+            UserWorkoutSessionModel(
+              active: false,
+              name: widget.session.name,
+              exercises: _exercises,
+              timeEnd: timeEnd,
+              timeStart: widget.session.timeStart,
+            ),
+            username,
+          );
+
+          if (!mounted) {
+            return false;
+          }
+
+          Provider.of<StatisticChangeModel>(context, listen: false).change();
+
+          context.succesSnackbar("Workout finished!");
+        }
+      }
+
+      setState(() {});
+
+      return true;
+    }
+
+    return false;
+  }
+
+  void discardSession() async {
+    var username = await _username;
+    var active = await FirebaseFirestore.instance.getActiveWorkoutSession(username);
+
+    if (active != null) {
+      await FirebaseFirestore.instance.colWorkoutSessions(username).doc(active).delete();
+
+      if (!mounted) {
+        return;
+      }
+
+      Provider.of<HomePageNotifier>(context, listen: false).notify();
+
+      context.succesSnackbar("Workout discarded!");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var bodyLarge = Theme.of(context).text.bodyLarge;
+
+    return PaddedContainer(
+      child: Column(
+        children: [
+          SectionTitle(text: widget.session.name),
+          _leftAlignedColumn([
+            Text("Time elapsed $elapsedTime", style: bodyLarge),
+            Text("Sets completed $sets", style: bodyLarge),
+            const SizedBox(height: 16.0),
+            _createExercisesInfo(),
+          ]),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              TextButton(
+                onPressed: () => showDialog(
+                  context: context,
+                  builder: (context) => AddSetDialog(
+                    exercise: nextExercise ?? "",
+                    workout: widget.workout,
+                    exercises: _exercises,
+                    onSubmitAsync: onSubmit,
+                  ),
+                ),
+                child: const Text("Add Set"),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: discardSession,
+                  child: Text(
+                    "Discard Session",
+                    style: Theme.of(context).text.bodyMedium!.copyWith(color: AppColors.error.withOpacity(0.5)),
+                  ),
+                ),
+              )
+            ],
+          ),
+          const Divider(
+            thickness: 2,
+          )
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    _timer.cancel();
+  }
+}
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -402,10 +649,14 @@ class _HomePageState extends State<HomePage> {
   late Future<List<WorkoutModel>> _workoutsFuture;
   late Future<ComparativeStatisticsModel> _statsFuture;
   late Future<double?> _weightGoalFuture;
+  late Future<UserWorkoutSessionModel?> _workoutSessionFuture;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    Provider.of<HomePageNotifier>(context);
+    Provider.of<StatisticChangeModel>(context);
 
     _username = Provider.of<UserModel>(context).username;
 
@@ -413,6 +664,7 @@ class _HomePageState extends State<HomePage> {
     _workoutsFuture = getWorkouts();
     _statsFuture = getStats();
     _weightGoalFuture = getWeightGoal();
+    _workoutSessionFuture = getWorkoutSession();
   }
 
   Future<double?> getWeightGoal() async {
@@ -444,24 +696,53 @@ class _HomePageState extends State<HomePage> {
     return FirebaseFirestore.instance.getWorkoutModels(username);
   }
 
+  Future<UserWorkoutSessionModel?> getWorkoutSession() async {
+    var username = await _username;
+    var active = await FirebaseFirestore.instance.getActiveWorkoutSession(username);
+
+    if (active == null) {
+      return null;
+    }
+
+    var result = await FirebaseFirestore.instance
+        .colWorkoutSessions(username)
+        .doc(active)
+        .withConverter(fromFirestore: UserWorkoutSessionModel.fromFirestore, toFirestore: (value, options) => value.toFirestore())
+        .get();
+    return result.data()!;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: Future.wait([_goalsFuture, _workoutsFuture, _statsFuture, _weightGoalFuture]),
+      future: Future.wait([_goalsFuture, _workoutsFuture, _statsFuture, _weightGoalFuture, _workoutSessionFuture]),
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           var goals = snapshot.data![0] as List<Goal>;
           var workouts = snapshot.data![1] as List<WorkoutModel>;
           var stats = snapshot.data![2] as ComparativeStatisticsModel;
-          var weightGoal = snapshot.data![3] as double;
+          var weightGoal = snapshot.data![3] == null ? 0.0 : snapshot.data![3] as double;
+          var workoutSession = snapshot.data![4] as UserWorkoutSessionModel?;
+
+          Widget? workoutSessionWidget;
+
+          if (workoutSession != null) {
+            workoutSessionWidget = WorkoutSession(
+              session: workoutSession,
+              workout: workouts.firstWhere(
+                (element) => element.name.toLowerCase() == workoutSession.name.toLowerCase(),
+              ),
+            );
+          }
 
           return GenericPage(
             body: Column(
-              children: [
+              children: <Widget?>[
+                workoutSessionWidget,
                 WeekSummary(stats: stats, weightGoal: weightGoal),
                 WorkoutListView(workouts: workouts),
                 GoalsListView(goals: goals),
-              ],
+              ].nonNulls.toList(),
             ),
           );
         } else {

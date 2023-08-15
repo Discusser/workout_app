@@ -4,22 +4,24 @@ import 'package:provider/provider.dart';
 import 'package:workout_app/extensions/message_helper.dart';
 import 'package:workout_app/firebase/firestore_helper.dart';
 
-import '../../main.dart';
 import '../../user_data.dart';
-import '../date_picker.dart';
 import '../form_dialog.dart';
 
-class AddWorkoutDialog extends StatefulWidget {
-  const AddWorkoutDialog({super.key});
-
-  @override
-  State<AddWorkoutDialog> createState() => _AddWorkoutDialogState();
+class HomePageNotifier with ChangeNotifier {
+  void notify() {
+    notifyListeners();
+  }
 }
 
-class _AddWorkoutDialogState extends State<AddWorkoutDialog> {
+class StartSessionDialog extends StatefulWidget {
+  const StartSessionDialog({super.key});
+
+  @override
+  State<StartSessionDialog> createState() => _StartSessionDialogState();
+}
+
+class _StartSessionDialogState extends State<StartSessionDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _minutesController = TextEditingController();
-  final _dateController = TextEditingController();
 
   late Future<List<String>> _workoutsFuture;
   late Future<String> _username;
@@ -40,37 +42,30 @@ class _AddWorkoutDialogState extends State<AddWorkoutDialog> {
     return workouts;
   }
 
-  List<Widget> formatFormChildren(List<Widget> children) {
-    return children.map((e) => Container(padding: const EdgeInsets.symmetric(vertical: 8.0), child: e)).toList();
-  }
+  Future<bool> onSubmit() async {
+    // if (_formKey.currentState!.validate()) {
+    // }
 
-  String? validateMinutes(String? value) {
-    if (value == null || value.isEmpty) {
-      return "Minutes spent cannot be null";
+    if (_name == null || _name!.isEmpty) {
+      return false;
     }
 
-    return null;
-  }
-
-  Future<void> _onSubmitAsync() async {
     var username = await _username;
-    FirebaseFirestore.instance.addWorkoutStat(
-      MyApp.dateFormat.parse(_dateController.text),
-      int.parse(_minutesController.text),
-      _name!,
-      username,
-    );
-  }
+    var started = await FirebaseFirestore.instance.startWorkoutSession(_name!, username);
 
-  bool onSubmit() {
-    if (_formKey.currentState!.validate()) {
-      _onSubmitAsync();
-      Provider.of<StatisticChangeModel>(context, listen: false).change();
-      context.succesSnackbar("Added Workout!");
-      return true;
+    if (!mounted) {
+      return false;
     }
 
-    return false;
+    if (!started) {
+      context.showAlert("There is already an active session, finish it before starting a new one.");
+    } else {
+      context.succesSnackbar("Started \"${_name!}\" session");
+    }
+
+    Provider.of<HomePageNotifier>(context, listen: false).notify();
+
+    return true;
   }
 
   void onDropdownChanged(String? value) {
@@ -103,27 +98,18 @@ class _AddWorkoutDialogState extends State<AddWorkoutDialog> {
     );
 
     return FormDialog(
-      title: "Add Workout",
+      title: "Start Workout Session",
       form: Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: FormDialog.formatFormChildren([
             dropdown,
-            TextFormField(
-              decoration: const InputDecoration(hintText: "Minutes spent"),
-              keyboardType: TextInputType.number,
-              autocorrect: false,
-              validator: (value) => validateMinutes(value),
-              controller: _minutesController,
-            ),
-            FancyDatePicker(
-              controller: _dateController,
-            ),
           ]),
         ),
       ),
-      onSubmit: onSubmit,
+      onSubmitAsync: onSubmit,
+      buttonText: "Start",
     );
   }
 }

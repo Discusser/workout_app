@@ -121,7 +121,7 @@ class _ExercisePageState extends State<ExercisePage> {
 
     for (int i = 0; i < copy.length; i++) {
       children.add(Text(
-        "${i + 1}. ${values[i]}",
+        "${i + 1}. ${copy[i]}",
         style: Theme.of(context).text.bodyLarge!.apply(fontSizeFactor: 1.2),
       ));
     }

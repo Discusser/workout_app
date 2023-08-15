@@ -12,7 +12,7 @@ class XYPair {
   const XYPair({required this.x, required this.y});
 
   final DateTime x;
-  final double y;
+  final num y;
 }
 
 class PlottedDataPage extends StatelessWidget {
@@ -40,14 +40,14 @@ class PlottedDataPage extends StatelessWidget {
 
     // Sort data by date and limit to the last 30
     data.sort((a, b) {
-      var map = a.toFirestore();
-      var map1 = b.toFirestore();
+      var map = a.toMap();
+      var map1 = b.toMap();
       return map[a.xAxisName].compareTo(map1[b.xAxisName]);
     });
     data = data.getRange(max(0, data.length - 30), data.length).toList();
 
     for (var element in data) {
-      var map = element.toFirestore();
+      var map = element.toMap();
       var x = discardTimestamp(map[element.xAxisName]);
       var y = map[element.yAxisName];
       dataSource.add(XYPair(x: x, y: y));
